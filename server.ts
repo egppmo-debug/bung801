@@ -12,7 +12,7 @@ import { diagnoseCorporateReport } from './src/utils/problemDiagnoser';
 dotenv.config();
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-const app = express();
+export const app = express();
 const PORT = 3000;
 
 app.use(express.json({ limit: '50mb' }));
@@ -812,6 +812,10 @@ async function startServer() {
   });
 }
 
-startServer().catch((err) => {
-  console.error('[Server Start Error]:', err);
-});
+if (!process.env.VERCEL) {
+  startServer().catch((err) => {
+    console.error('[Server Start Error]:', err);
+  });
+}
+
+export default app;

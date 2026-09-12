@@ -1,0 +1,7 @@
+{
+  "name": "한화피플라이프 법인컨설팅 가상시나리오 AI",
+  "description": "한화피플라이프 대전글로리사업단 컨설턴트를 위한 법인 분석 리포트 기반 4단계 실전 가상 상담 대화 스크립트 및 시뮬레이션 AI 플랫폼",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

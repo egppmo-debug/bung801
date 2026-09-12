@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+/* 
+ * =========================================================================
+ * 대전글로리사업단 컨설팅 솔루션: 라이트 모드(기본값) 및 다크 모드 테마 시스템
+ * =========================================================================
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Slate Color Scale for Light Mode (Default) */
+  --color-slate-50: #020617;    /* 최고 대비 텍스트 (Deepest text) */
+  --color-slate-100: #0f172a;   /* 메인 타이틀, 헤딩 텍스트 (Slate-900 equivalent) */
+  --color-slate-200: #1e293b;   /* 서브 타이틀, 강조 텍스트 (Slate-800 equivalent) */
+  --color-slate-300: #334155;   /* 본문 텍스트, 라벨 (Slate-700 equivalent) */
+  --color-slate-400: #475569;   /* 보조 설명, 아이콘, 힌트 (Slate-600 equivalent) */
+  --color-slate-500: #64748b;   /* 타임스탬프, 미세 메타데이터 */
+  --color-slate-600: #94a3b8;   /* 연한 테두리, 비활성 아이콘 */
+  --color-slate-700: #cbd5e1;   /* 구분선, 인풋 테두리 */
+  --color-slate-800: #e2e8f0;   /* 카드 테두리, 칩/서브컨테이너 배경 */
+  --color-slate-900: #ffffff;   /* 기본 카드 및 패널 배경 (White surface) */
+  --color-slate-950: #f8fafc;   /* 전체 페이지 캔버스 배경 (Light gray canvas) */
+
+  /* Point Accent Colors tuned for Light Mode (High Contrast & WCAG AA) */
+  --color-orange-400: #ea580c;  /* Orange-600 for sharp text legibility */
+  --color-orange-300: #c2410c;  /* Orange-700 for badges */
+  --color-orange-950: #fff7ed;  /* Orange-50 for delicate soft badge background */
+  --color-orange-900: #ffedd5;  /* Orange-100 */
+
+  --color-amber-400: #d97706;   /* Amber-600 */
+  --color-amber-300: #b45309;   /* Amber-700 */
+  --color-amber-950: #fffbeb;   /* Amber-50 */
+  --color-amber-900: #fef3c7;   /* Amber-100 */
+
+  --color-blue-400: #2563eb;    /* Blue-600 */
+  --color-blue-300: #1d4ed8;    /* Blue-700 */
+  --color-blue-950: #eff6ff;    /* Blue-50 */
+  --color-blue-900: #dbeafe;    /* Blue-100 */
+
+  --color-emerald-400: #059669; /* Emerald-600 */
+  --color-emerald-300: #047857; /* Emerald-700 */
+  --color-emerald-950: #ecfdf5; /* Emerald-50 */
+  --color-emerald-900: #d1fae5; /* Emerald-100 */
+
+  --color-rose-400: #e11d48;    /* Rose-600 */
+  --color-rose-300: #be123c;    /* Rose-700 */
+  --color-rose-950: #fff1f2;    /* Rose-50 */
+  --color-rose-900: #ffe4e6;    /* Rose-100 */
+
+  --color-red-400: #dc2626;     /* Red-600 */
+  --color-red-300: #b91c1c;     /* Red-700 */
+  --color-red-950: #fef2f2;     /* Red-50 */
+  --color-red-900: #fee2e2;     /* Red-100 */
+
+  --color-indigo-400: #4f46e5;  /* Indigo-600 */
+  --color-indigo-300: #4338ca;  /* Indigo-700 */
+  --color-indigo-950: #eef2ff;  /* Indigo-50 */
+  --color-indigo-900: #e0e7ff;  /* Indigo-100 */
+}
+
+/* Dark Mode (.dark class on html/body) */
+html.dark,
+.dark {
+  color-scheme: dark;
+
+  /* Slate Color Scale for Dark Mode */
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #020617;
+
+  /* Accents in Dark Mode */
+  --color-orange-400: #fb923c;
+  --color-orange-300: #fdba74;
+  --color-orange-950: #431407;
+  --color-orange-900: #7c2d12;
+
+  --color-amber-400: #fbbf24;
+  --color-amber-300: #fcd34d;
+  --color-amber-950: #451a03;
+  --color-amber-900: #78350f;
+
+  --color-blue-400: #60a5fa;
+  --color-blue-300: #93c5fd;
+  --color-blue-950: #172554;
+  --color-blue-900: #1e3a8a;
+
+  --color-emerald-400: #34d399;
+  --color-emerald-300: #6ee7b7;
+  --color-emerald-950: #022c22;
+  --color-emerald-900: #064e3b;
+
+  --color-rose-400: #fb7185;
+  --color-rose-300: #fda4af;
+  --color-rose-950: #4c0519;
+  --color-rose-900: #881337;
+
+  --color-red-400: #f87171;
+  --color-red-300: #fca5a5;
+  --color-red-950: #450a0a;
+  --color-red-900: #7f1d1d;
+
+  --color-indigo-400: #818cf8;
+  --color-indigo-300: #a5b4fc;
+  --color-indigo-950: #1e1b4b;
+  --color-indigo-900: #312e81;
+}
+
+/* Base Body Styles */
+body {
+  background-color: var(--color-slate-950);
+  color: var(--color-slate-100);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Light mode card elevation refinement */
+:root:not(.dark) .bg-slate-900 {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+}

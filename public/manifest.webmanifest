@@ -1,0 +1,32 @@
+{
+  "id": "/",
+  "name": "한화피플라이프 법인컨설팅 가상시나리오 AI",
+  "short_name": "글로리AI",
+  "description": "한화피플라이프 대전글로리사업단 컨설턴트를 위한 4단계 실전 가상 상담 대화 스크립트 AI",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#ea580c",
+  "background_color": "#020617",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

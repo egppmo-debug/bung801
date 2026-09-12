@@ -1,0 +1,44 @@
+{
+  "entities": {
+    "SecurityConfig": {
+      "title": "SecurityConfig",
+      "description": "System PIN and security credential settings for Daejeon Glory division authorized consultants and admin",
+      "type": "object",
+      "properties": {
+        "userPin": {
+          "type": "string",
+          "description": "PIN code required for consultants (FA) to unlock and access the application",
+          "minLength": 4,
+          "maxLength": 20
+        },
+        "adminPin": {
+          "type": "string",
+          "description": "Administrative PIN code required to open the Admin Security Control Center",
+          "minLength": 4,
+          "maxLength": 20
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of when the security credentials were last updated"
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "Identifier or role of the administrator who performed the update"
+        },
+        "lastSynced": {
+          "type": "string",
+          "description": "Human readable time string of cloud synchronization"
+        }
+      },
+      "required": ["userPin", "adminPin"]
+    }
+  },
+  "firestore": {
+    "/system/security": {
+      "schema": {
+        "$ref": "SecurityConfig"
+      },
+      "description": "Global security configuration containing authorized user PIN and admin PIN for Hanwha PeopleLife Daejeon Glory"
+    }
+  }
+}

@@ -177,8 +177,17 @@ export const LoadReportModal: React.FC<LoadReportModalProps> = ({
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || '크레탑 리포트 분석에 실패했습니다.');
+        const responseText = await res.text();
+        let errorMessage = '';
+        try {
+          errorMessage = JSON.parse(responseText).error || '';
+        } catch {
+          errorMessage = responseText;
+        }
+        if (res.status === 413) {
+          throw new Error('리포트 파일이 너무 큽니다. 50MB 이하의 PDF 또는 문서 파일을 사용해 주세요.');
+        }
+        throw new Error(errorMessage || '크레탑 리포트 분석에 실패했습니다.');
       }
 
       const data = await res.json();

@@ -15,7 +15,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 const app = express();
 const PORT = 3000;
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
 
 // Resilient Gemini Model Candidates (prioritizing gemini-3.8-flash for stability)
 const CANDIDATE_GEMINI_MODELS = [

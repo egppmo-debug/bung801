@@ -1,4 +1,3 @@
-import { GoogleGenAI } from '@google/genai';
 import { diagnoseCorporateReport } from '../../src/utils/problemDiagnoser';
 import { CorporateReport, ConsultingCategory, DEFAULT_CONSULTANT_NAME } from '../../src/types';
 
@@ -78,37 +77,32 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
     const sourceText = body.text || '[PDF 문서가 첨부되었습니다. 제공된 문서 내용을 바탕으로 분석하십시오.]';
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `다음 법인 리포트를 분석해 JSON으로 반환하십시오. 모든 값은 한국어로 작성하십시오.\n\n${sourceText.slice(0, 18000)}`,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: 'OBJECT',
-          properties: {
-            companyName: { type: 'STRING' },
-            ceoName: { type: 'STRING' },
-            industry: { type: 'STRING' },
-            establishedYear: { type: 'INTEGER' },
-            annualRevenue: { type: 'STRING' },
-            operatingProfit: { type: 'STRING' },
-            retainedEarnings: { type: 'STRING' },
-            provisionalPayment: { type: 'STRING' },
-            shareholders: { type: 'STRING' },
-            employeeCount: { type: 'INTEGER' },
-            articlesStatus: { type: 'STRING' },
-            debtRatio: { type: 'STRING' },
-            recommendedCategory: { type: 'STRING' },
-            recommendationReason: { type: 'STRING' },
-            cretopSummary: { type: 'STRING' },
-          },
-          required: ['companyName', 'ceoName', 'industry', 'establishedYear', 'annualRevenue', 'operatingProfit', 'retainedEarnings', 'provisionalPayment', 'shareholders', 'employeeCount', 'articlesStatus', 'debtRatio', 'recommendedCategory', 'recommendationReason', 'cretopSummary'],
-        },
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `다음 법인 리포트를 분석해 JSON으로 반환하십시오. 모든 값은 한국어로 작성하십시오. JSON 외 텍스트는 포함하지 마십시오.\n\n${sourceText.slice(0, 18000)}`,
+            }],
+          }],
+          generationConfig: { responseMimeType: 'application/json' },
+        }),
       },
-    });
-    const parsed = JSON.parse(response.text || '{}');
+    );
+    clearTimeout(timeout);
+    if (!response.ok) {
+      throw new Error(`Gemini API returned ${response.status}`);
+    }
+    const responseBody = await response.json();
+    const responseText = responseBody.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+    const parsed = JSON.parse(responseText.replace(/^```json\s*|\s*```$/g, '').trim());
     const report: CorporateReport = {
       ...fallback,
       ...parsed,
@@ -123,3 +117,11 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json(jsonResponse(fallback));
   }
 }
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+  },
+};

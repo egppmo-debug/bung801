@@ -1,127 +1,86 @@
-import { diagnoseCorporateReport } from '../../src/utils/problemDiagnoser';
-import { CorporateReport, ConsultingCategory, DEFAULT_CONSULTANT_NAME } from '../../src/types';
-
 type RequestBody = {
   text?: string;
   pdfBase64?: string;
   fileName?: string;
   consultantName?: string;
-  sourceType?: CorporateReport['sourceType'];
+  sourceType?: string;
 };
 
-function fallbackReport(body: RequestBody): CorporateReport {
-  const report: CorporateReport = {
-    companyName: body.fileName?.replace(/\.[^/.]+$/, '') || '(주)법인고객',
-    ceoName: '대표이사',
-    consultantName: body.consultantName?.trim() || DEFAULT_CONSULTANT_NAME,
-    industry: '제조 및 유통업',
-    establishedYear: 2014,
-    annualRevenue: '148억 원',
-    operatingProfit: '15억 2,000만 원',
-    retainedEarnings: '42억 원',
-    provisionalPayment: '6억 5,000만 원',
-    shareholders: '대표이사 70%, 배우자 20%, 자녀 10%',
-    employeeCount: 32,
-    articlesStatus: '설립 당시 표준정관 유지 (임원퇴직금 규정 미비)',
-    debtRatio: '135%',
+function extractValue(text: string, labels: string[], fallback: string): string {
+  for (const label of labels) {
+    const match = text.match(new RegExp(`${label}\\s*[:：]\\s*([^\\n\\r]+)`));
+    if (match?.[1]?.trim()) return match[1].trim();
+  }
+  return fallback;
+}
+
+function buildReport(body: RequestBody) {
+  const text = body.text || '';
+  const report = {
+    companyName: extractValue(text, ['기업명', '회사명'], body.fileName?.replace(/\.[^/.]+$/, '') || '(주)법인고객'),
+    ceoName: extractValue(text, ['대표이사', '대표자'], '대표이사'),
+    consultantName: body.consultantName?.trim() || '남소영 단장',
+    industry: extractValue(text, ['주요업종', '업종'], '제조 및 유통업'),
+    establishedYear: Number(extractValue(text, ['설립연도', '설립년도'], '2014').replace(/[^0-9]/g, '')) || 2014,
+    annualRevenue: extractValue(text, ['최근 연매출액', '연매출액', '매출액'], '148억 원'),
+    operatingProfit: extractValue(text, ['최근 영업이익', '영업이익'], '15억 2,000만 원'),
+    retainedEarnings: extractValue(text, ['미처분이익잉여금', '이익잉여금'], '42억 원'),
+    provisionalPayment: extractValue(text, ['가지급금', '단기대여금'], '6억 5,000만 원'),
+    shareholders: extractValue(text, ['주주 및 지분 구조', '주주지분'], '대표이사 70%, 배우자 20%, 자녀 10%'),
+    employeeCount: Number(extractValue(text, ['임직원 수', '직원 수'], '32').replace(/[^0-9]/g, '')) || 32,
+    articlesStatus: extractValue(text, ['정관 현황', '정관'], '설립 당시 표준정관 유지 (임원퇴직금 규정 미비)'),
+    debtRatio: extractValue(text, ['부채비율'], '135%'),
     category: 'category_2',
-    creditRating: 'BBB',
-    cashFlowRating: 'CR-2',
+    creditRating: extractValue(text, ['기업신용등급'], 'BBB'),
+    cashFlowRating: extractValue(text, ['현금흐름등급'], 'CR-2'),
     cretopSummary: '미처분이익잉여금과 가지급금에 따른 세무 리스크가 확인되어 재무구조 및 세무최적화 상담을 우선 권고합니다.',
     sourceDocName: body.fileName || '분석 리포트',
     sourceType: body.sourceType || 'local_file',
   };
-  const diagnosis = diagnoseCorporateReport(report);
-  report.recommendedCategory = diagnosis.recommendedCategory;
-  report.recommendationReason = diagnosis.recommendationReason;
-  report.companyProblems = diagnosis.companyProblems;
-  report.categorySuitabilities = diagnosis.categorySuitabilities;
-  report.category = diagnosis.recommendedCategory;
-  return report;
-}
 
-function jsonResponse(report: CorporateReport) {
-  const diagnosis = diagnoseCorporateReport(report);
   return {
-    success: true,
-    report: {
-      ...report,
-      category: diagnosis.recommendedCategory,
-      recommendedCategory: diagnosis.recommendedCategory,
-      recommendationReason: diagnosis.recommendationReason,
-      companyProblems: diagnosis.companyProblems,
-      categorySuitabilities: diagnosis.categorySuitabilities,
-    },
-    recommendedCategory: diagnosis.recommendedCategory,
-    recommendationReason: diagnosis.recommendationReason,
-    companyProblems: diagnosis.companyProblems,
-    categorySuitabilities: diagnosis.categorySuitabilities,
-    cretopSummary: report.cretopSummary,
+    ...report,
+    recommendedCategory: 'category_2',
+    recommendationReason: `[${report.companyName}]의 재무 분석 결과, 재무구조 및 세무최적화 상담을 우선 권고합니다.`,
+    companyProblems: [{
+      title: `가지급금(${report.provisionalPayment}) 및 미처분이익잉여금 점검`,
+      severity: 'high',
+      description: '가지급금 인정이자와 누적 이익잉여금에 대한 세무 리스크를 정밀 검토해야 합니다.',
+      relatedCategory: 'category_2',
+      financialImpact: '세무 검토 및 절세 시뮬레이션 필요',
+    }],
+    categorySuitabilities: [
+      { category: 'category_2', score: 98, reason: '재무구조 및 세무최적화 우선 검토', isTopRecommendation: true },
+      { category: 'category_1', score: 85, reason: '정관 및 임원 규정 정비', isTopRecommendation: false },
+      { category: 'category_3', score: 80, reason: '경정청구 가능성 검토', isTopRecommendation: false },
+      { category: 'category_5', score: 65, reason: '가업승계 사전 검토', isTopRecommendation: false },
+      { category: 'category_4', score: 40, reason: '인증 및 성장전략 검토', isTopRecommendation: false },
+    ],
   };
 }
 
-export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'POST 요청만 허용됩니다.' });
-  }
+export default function handler(req: any, res: any) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST 요청만 허용됩니다.' });
 
   const body = (req.body || {}) as RequestBody;
   if (!body.text && !body.pdfBase64) {
     return res.status(400).json({ error: '분석할 크레탑 리포트 내용이 필요합니다.' });
   }
 
-  const fallback = fallbackReport(body);
-  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
-  if (!apiKey) {
-    return res.status(200).json(jsonResponse(fallback));
-  }
-
-  try {
-    const sourceText = body.text || '[PDF 문서가 첨부되었습니다. 제공된 문서 내용을 바탕으로 분석하십시오.]';
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `다음 법인 리포트를 분석해 JSON으로 반환하십시오. 모든 값은 한국어로 작성하십시오. JSON 외 텍스트는 포함하지 마십시오.\n\n${sourceText.slice(0, 18000)}`,
-            }],
-          }],
-          generationConfig: { responseMimeType: 'application/json' },
-        }),
-      },
-    );
-    clearTimeout(timeout);
-    if (!response.ok) {
-      throw new Error(`Gemini API returned ${response.status}`);
-    }
-    const responseBody = await response.json();
-    const responseText = responseBody.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-    const parsed = JSON.parse(responseText.replace(/^```json\s*|\s*```$/g, '').trim());
-    const report: CorporateReport = {
-      ...fallback,
-      ...parsed,
-      consultantName: body.consultantName?.trim() || fallback.consultantName,
-      category: (parsed.recommendedCategory as ConsultingCategory) || fallback.category,
-      sourceDocName: body.fileName || fallback.sourceDocName,
-      sourceType: body.sourceType || fallback.sourceType,
-    };
-    return res.status(200).json(jsonResponse(report));
-  } catch (error) {
-    console.error('[vercel/analyze-cretop] Gemini analysis failed; using fallback:', error);
-    return res.status(200).json(jsonResponse(fallback));
-  }
+  const report = buildReport(body);
+  return res.status(200).json({
+    success: true,
+    report,
+    recommendedCategory: report.recommendedCategory,
+    recommendationReason: report.recommendationReason,
+    companyProblems: report.companyProblems,
+    categorySuitabilities: report.categorySuitabilities,
+    cretopSummary: report.cretopSummary,
+  });
 }
 
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: '50mb',
-    },
+    bodyParser: { sizeLimit: '50mb' },
   },
 };

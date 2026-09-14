@@ -64,12 +64,13 @@ export const AdminSecurityModal: React.FC<AdminSecurityModalProps> = ({
   // Handle Admin Passcode verification
   const handleVerifyAdmin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adminAuthInput.trim()) {
+    const trimmed = (adminAuthInput || '').trim();
+    if (!trimmed) {
       setAuthError('관리자 비밀번호를 입력하세요.');
       return;
     }
 
-    if (adminAuthInput.trim() === securityConfig.adminPin) {
+    if (trimmed === securityConfig?.adminPin) {
       setIsAdminAuthenticated(true);
       setAuthError('');
     } else {
@@ -101,7 +102,7 @@ export const AdminSecurityModal: React.FC<AdminSecurityModalProps> = ({
     try {
       setIsSaving(true);
       const updated = await updateSecurityConfig(
-        { userPin: newUserPin.trim() },
+        { userPin: (newUserPin || '').trim() },
         '대전글로리사업단 관리자'
       );
       onConfigUpdated(updated);
@@ -146,7 +147,7 @@ export const AdminSecurityModal: React.FC<AdminSecurityModalProps> = ({
     try {
       setIsSaving(true);
       const updated = await updateSecurityConfig(
-        { adminPin: newAdminPin.trim() },
+        { adminPin: (newAdminPin || '').trim() },
         '대전글로리사업단 마스터 관리자'
       );
       onConfigUpdated(updated);

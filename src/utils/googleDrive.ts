@@ -17,7 +17,7 @@ export async function listDriveDocuments(
 ): Promise<DriveFileItem[]> {
   try {
     let q = "trashed = false and (mimeType = 'application/vnd.google-apps.document' or mimeType = 'application/pdf')";
-    if (searchQuery && searchQuery.trim()) {
+    if (searchQuery?.trim()) {
       const cleanSearch = searchQuery.replace(/'/g, "\\'");
       q += ` and name contains '${cleanSearch}'`;
     }

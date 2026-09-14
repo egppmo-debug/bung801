@@ -22,8 +22,10 @@ import {
   UserCheck,
   Plus,
   Check,
-  Info
+  Info,
+  FileDown
 } from 'lucide-react';
+import { openScenarioPdfPrintWindow } from './utils/pdfExport';
 import { 
   ConsultingCategory, 
   CorporateReport, 
@@ -46,6 +48,7 @@ import { ConsultantLiveNotes } from './components/ConsultantLiveNotes';
 import { ProblemDiagnosisCard } from './components/ProblemDiagnosisCard';
 import { SecurityLockScreen } from './components/SecurityLockScreen';
 import { AdminSecurityModal } from './components/AdminSecurityModal';
+import { PWAInstallModal } from './components/PWAInstallModal';
 import { 
   SecurityConfig, 
   DEFAULT_SECURITY_CONFIG, 
@@ -55,8 +58,9 @@ import {
 import { speechService } from './utils/tts';
 
 export function App() {
-  // Security lock state: Always starts in locked mode whenever the app begins
+  // Security lock state: Starts in locked state by default as requested
   const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
 
   // Security credentials state from Firebase Firestore
   const [securityConfig, setSecurityConfig] = useState<SecurityConfig>(() => {
@@ -149,8 +153,8 @@ export function App() {
     }
   });
 
-  const handleUpdateConsultantName = (name: string) => {
-    const trimmed = name.trim() || DEFAULT_CONSULTANT_NAME;
+  const handleUpdateConsultantName = (name?: string) => {
+    const trimmed = (name || '').trim() || DEFAULT_CONSULTANT_NAME;
     setConsultantName(trimmed);
     try {
       localStorage.setItem('hanwha_consultant_name', trimmed);
@@ -172,14 +176,9 @@ export function App() {
     }
   };
 
-  // Category and Report states (Initial state starts empty as requested: "기본 샘플 데이터는 삭제하고")
-  const [currentCategory, setCurrentCategory] = useState<ConsultingCategory>('category_2');
-  const [report, setReport] = useState<CorporateReport>(() => 
-    createEmptyReport('category_2', consultantName)
-  );
-
+  // Category and Report states (Synced with active scenario if present)
   // Scenario state: restored from localStorage if available, or null (clean slate)
-  const [scenario, setScenario] = useState<GeneratedScenario | null>(() => {
+  const savedScenarioData = React.useMemo(() => {
     try {
       const saved = localStorage.getItem('hanwha_active_scenario');
       if (saved) {
@@ -197,6 +196,22 @@ export function App() {
     } catch {
       return null;
     }
+  }, []);
+
+  const [scenario, setScenario] = useState<GeneratedScenario | null>(savedScenarioData);
+
+  const [currentCategory, setCurrentCategory] = useState<ConsultingCategory>(() => 
+    savedScenarioData?.report?.category || 'category_2'
+  );
+
+  const [report, setReport] = useState<CorporateReport>(() => {
+    if (savedScenarioData?.report?.companyName) {
+      return {
+        ...savedScenarioData.report,
+        consultantName: consultantName || savedScenarioData.report.consultantName || DEFAULT_CONSULTANT_NAME,
+      };
+    }
+    return createEmptyReport('category_2', consultantName);
   });
 
   // Handler to update live notes and keep them saved alongside the scenario
@@ -243,10 +258,15 @@ export function App() {
   const handleSelectCategory = (cat: ConsultingCategory) => {
     handleStopAudio();
     setCurrentCategory(cat);
-    setReport((prev) => ({
-      ...prev,
-      category: cat,
-    }));
+    setReport((prev) => {
+      const baseReport = prev?.companyName?.trim() 
+        ? prev 
+        : (scenario?.report?.companyName?.trim() ? scenario.report : prev);
+      return {
+        ...baseReport,
+        category: cat,
+      };
+    });
   };
 
   // Reset to sample for the category if user explicitly desires
@@ -258,17 +278,26 @@ export function App() {
     });
   };
 
-  // Clear report form completely
+  // Clear report form and active scenario completely (full reset)
   const handleClearReport = () => {
+    handleStopAudio();
+    setScenario(null);
+    setActiveTurnIndex(0);
+    try {
+      localStorage.removeItem('hanwha_active_scenario');
+    } catch {}
     setReport(createEmptyReport(currentCategory, consultantName));
+    setIsInputOpen(true);
   };
 
   // Handle report loaded from Modal (file upload, text parse, preset, history)
   const handleReportLoaded = (loadedReport: CorporateReport, autoGenerate?: boolean) => {
-    const updated = {
+    const updated: CorporateReport = {
+      ...createEmptyReport(loadedReport?.category || currentCategory, consultantName),
       ...loadedReport,
-      category: loadedReport.category || currentCategory,
-      consultantName: loadedReport.consultantName || consultantName || DEFAULT_CONSULTANT_NAME,
+      companyName: (loadedReport?.companyName || '').trim(),
+      category: loadedReport?.category || currentCategory,
+      consultantName: (loadedReport?.consultantName || consultantName || DEFAULT_CONSULTANT_NAME).trim(),
     };
     setReport(updated);
     setCurrentCategory(updated.category);
@@ -293,7 +322,7 @@ export function App() {
         report: savedReport,
       };
       // Keep up to 10 recent reports
-      const updated = [item, ...list.filter((x: any) => x.report.companyName !== savedReport.companyName)].slice(0, 10);
+      const updated = [item, ...list.filter((x: any) => x?.report?.companyName !== savedReport?.companyName)].slice(0, 10);
       localStorage.setItem('hanwha_report_history', JSON.stringify(updated));
     } catch (e) {
       console.warn(e);
@@ -301,12 +330,22 @@ export function App() {
   };
 
   // Generate new scenario via Gemini API
-  const handleGenerateAI = async (overrideReport?: CorporateReport) => {
-    const activeReport = overrideReport || {
-      ...report,
-      category: currentCategory,
-    };
-    if (!activeReport.companyName.trim()) {
+  const handleGenerateAI = async (overrideReport?: CorporateReport | unknown) => {
+    // Determine whether overrideReport is a valid CorporateReport or a DOM/Synthetic Event
+    const isReportObj = Boolean(
+      overrideReport && 
+      typeof overrideReport === 'object' && 
+      'companyName' in (overrideReport as any) && 
+      typeof (overrideReport as any).companyName === 'string'
+    );
+
+    const baseReport: CorporateReport = isReportObj
+      ? (overrideReport as CorporateReport)
+      : (report?.companyName?.trim() 
+          ? report 
+          : (scenario?.report?.companyName?.trim() ? scenario.report : report));
+
+    if (!baseReport?.companyName?.trim()) {
       alert('법인 리포트의 기업명을 입력해 주시거나 [리포트 불러오기]를 이용해 주세요.');
       setIsInputOpen(true);
       return;
@@ -316,12 +355,16 @@ export function App() {
     handleStopAudio();
 
     try {
-      const payloadReport = {
-        ...activeReport,
-        category: activeReport.category || currentCategory,
-        consultantName: activeReport.consultantName || consultantName || DEFAULT_CONSULTANT_NAME,
+      // Determine the target category: user's currently selected category takes priority
+      const targetCategory: ConsultingCategory = (isReportObj && (overrideReport as CorporateReport).category)
+        ? (overrideReport as CorporateReport).category
+        : (currentCategory || baseReport.category || 'category_2');
+
+      const payloadReport: CorporateReport = {
+        ...baseReport,
+        category: targetCategory,
+        consultantName: baseReport.consultantName?.trim() || consultantName?.trim() || DEFAULT_CONSULTANT_NAME,
       };
-      setReport(payloadReport);
 
       const res = await fetch('/api/scenario/generate', {
         method: 'POST',
@@ -344,6 +387,8 @@ export function App() {
           consultantLiveNotes: cachedNotes,
         };
         setScenario(fullScenario);
+        setCurrentCategory(targetCategory);
+        setReport(payloadReport);
         try {
           localStorage.setItem('hanwha_active_scenario', JSON.stringify(fullScenario));
         } catch (e) {
@@ -462,6 +507,10 @@ export function App() {
   const handleResetNewScenario = () => {
     handleStopAudio();
     setScenario(null);
+    setActiveTurnIndex(0);
+    try {
+      localStorage.removeItem('hanwha_active_scenario');
+    } catch {}
     setReport(createEmptyReport(currentCategory, consultantName));
     setIsInputOpen(true);
   };
@@ -483,6 +532,7 @@ export function App() {
           securityConfig={securityConfig}
           onUnlock={handleUnlock}
           onOpenAdminAuth={() => setIsAdminModalOpen(true)}
+          onOpenInstallModal={() => setIsInstallModalOpen(true)}
           isFirebaseLoading={isFirebaseLoading}
           isDarkMode={isDarkMode}
           onToggleTheme={handleToggleTheme}
@@ -493,6 +543,10 @@ export function App() {
           securityConfig={securityConfig}
           onLockScreen={handleLockScreen}
           onConfigUpdated={(newCfg) => setSecurityConfig(newCfg)}
+        />
+        <PWAInstallModal
+          isOpen={isInstallModalOpen}
+          onClose={() => setIsInstallModalOpen(false)}
         />
       </>
     );
@@ -508,6 +562,7 @@ export function App() {
         onOpenExport={() => setIsExportOpen(true)}
         onOpenLoadReport={() => setIsLoadReportModalOpen(true)}
         onOpenMp3Modal={handleOpenFullMp3Modal}
+        onDownloadPdf={scenario ? () => openScenarioPdfPrintWindow(scenario) : undefined}
         onToggleInput={() => setIsInputOpen(!isInputOpen)}
         isInputOpen={isInputOpen}
         isGenerating={isGenerating}
@@ -516,6 +571,7 @@ export function App() {
         hasScenario={!!scenario}
         onResetNewScenario={handleResetNewScenario}
         onOpenAdminCenter={() => setIsAdminModalOpen(true)}
+        onOpenInstallModal={() => setIsInstallModalOpen(true)}
         isDarkMode={isDarkMode}
         onToggleTheme={handleToggleTheme}
       />
@@ -602,7 +658,7 @@ export function App() {
               </div>
 
               {/* If report filled: STEP 2 - AI Problem Diagnosis & 5 Consulting Categories Selection */}
-              {report.companyName.trim() && (
+              {Boolean(report?.companyName?.trim()) && (
                 <div className="mt-8 space-y-4">
                   <ProblemDiagnosisCard
                     report={report}
@@ -623,16 +679,16 @@ export function App() {
                     <button
                       onClick={() => handleGenerateAI()}
                       disabled={isGenerating}
-                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2.5 shadow-xl shadow-orange-950/60 transition cursor-pointer"
+                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 hover:from-orange-400 hover:to-amber-400 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-2.5 shadow-xl transition cursor-pointer"
                     >
                       {isGenerating ? (
                         <>
-                          <Sparkles className="w-4 h-4 animate-spin text-slate-950" />
+                          <Sparkles className="w-4 h-4 animate-spin text-black" />
                           <span>Gemini AI가 [{currentCategoryInfo.code}] 15턴 시나리오 작성 중...</span>
                         </>
                       ) : (
                         <>
-                          <Sparkles className="w-4 h-4 text-slate-950" />
+                          <Sparkles className="w-4 h-4 text-black" />
                           <span>[{currentCategoryInfo.code}] 주제로 4단계 실전 시나리오 생성하기</span>
                         </>
                       )}
@@ -731,6 +787,67 @@ export function App() {
                   </div>
                 </div>
               </div>
+
+              {/* Category Switcher & AI Generate Bar */}
+              <div className="pt-3 border-t border-slate-800/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
+                  <span className="text-[11px] font-bold text-slate-400 mr-1 shrink-0">
+                    컨설팅 주제 전환:
+                  </span>
+                  {(Object.keys(CATEGORY_INFO) as ConsultingCategory[]).map((catKey) => {
+                    const cat = CATEGORY_INFO[catKey];
+                    const isSelected = currentCategory === catKey;
+                    const isCurrentScenarioCat = scenario.report.category === catKey;
+                    return (
+                      <button
+                        key={catKey}
+                        type="button"
+                        onClick={() => handleSelectCategory(catKey)}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                          isSelected
+                            ? 'bg-orange-500 text-black shadow-md ring-1 ring-orange-400'
+                            : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700/90 hover:text-white border border-slate-700/60'
+                        }`}
+                      >
+                        <span className="text-[10px] px-1 py-0.2 rounded bg-black/20 font-black">
+                          {cat.code}
+                        </span>
+                        <span>{cat.name}</span>
+                        {isCurrentScenarioCat && !isSelected && (
+                          <span className="text-[9px] text-orange-400 bg-orange-950/80 px-1 rounded">
+                            현재
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* AI Generate Button for Active / Selected Category */}
+                <button
+                  type="button"
+                  id="btn-active-scenario-generate-ai"
+                  onClick={() => handleGenerateAI()}
+                  disabled={isGenerating}
+                  className="w-full md:w-auto px-4 py-2 text-xs font-black rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-black transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Sparkles className="w-4 h-4 animate-spin text-black shrink-0" />
+                      <span>[{currentCategoryInfo.code}] 시나리오 생성 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 text-black shrink-0" />
+                      <span>
+                        {scenario.report.category !== currentCategory 
+                          ? `[${currentCategoryInfo.code}] 카테고리로 AI 시나리오 생성`
+                          : `[${currentCategoryInfo.code}] 시나리오 AI 재생성`}
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Global Continuous Audio Player Bar with MP3 Download */}
@@ -759,12 +876,12 @@ export function App() {
                   onClick={() => setActiveViewTab('script')}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                     activeViewTab === 'script'
-                      ? 'bg-orange-500 text-slate-950 shadow-md shadow-orange-950/40'
-                      : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                      ? 'bg-orange-500 text-black font-extrabold shadow-md'
+                      : 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800'
                   }`}
                 >
                   <MessageSquare className="w-4 h-4" />
-                  <span>4단계 실전 상담 대본 ({scenario.dialogueTurns.length}턴)</span>
+                  <span>4단계 실전 대본 ({scenario.dialogueTurns.length}턴)</span>
                 </button>
 
                 <button
@@ -772,24 +889,36 @@ export function App() {
                   onClick={() => setActiveViewTab('analysis')}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                     activeViewTab === 'analysis'
-                      ? 'bg-orange-500 text-slate-950 shadow-md shadow-orange-950/40'
-                      : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                      ? 'bg-orange-500 text-black font-extrabold shadow-md'
+                      : 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800'
                   }`}
                 >
                   <Layers className="w-4 h-4" />
-                  <span>핵심 리스크 진단 & 상법·세법 근거 덱</span>
+                  <span>핵심 리스크 진단 & 법적 근거 덱</span>
                 </button>
               </div>
 
               <div className="flex items-center gap-2">
+                {/* PDF Download Button */}
+                <button
+                  id="btn-view-download-pdf"
+                  onClick={() => openScenarioPdfPrintWindow(scenario)}
+                  className="px-3 py-1.5 rounded-lg bg-rose-100 dark:bg-rose-950/80 hover:bg-rose-200 dark:hover:bg-rose-900 text-rose-950 dark:text-rose-200 border border-rose-400 dark:border-rose-500/40 text-xs font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+                  title="현재 시나리오와 분석 리포트를 깔끔한 PDF로 저장 / 인쇄"
+                >
+                  <FileDown className="w-3.5 h-3.5 text-rose-700 dark:text-rose-400" />
+                  <span>PDF</span>
+                </button>
+
                 {/* MP3 Download Button */}
                 <button
+                  id="btn-view-download-mp3"
                   onClick={handleOpenFullMp3Modal}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 transition shadow-sm shadow-emerald-950"
+                  className="px-3 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 dark:hover:bg-emerald-900 text-emerald-950 dark:text-emerald-200 border border-emerald-400 dark:border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer"
                   title="MP3 음원 파일 다운로드"
                 >
-                  <Headphones className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>MP3 다운로드</span>
+                  <Headphones className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+                  <span>MP3</span>
                 </button>
 
                 <div className="hidden sm:flex items-center gap-3 text-xs text-slate-400 ml-2">
@@ -816,6 +945,7 @@ export function App() {
                   onPracticeTurn={handlePracticeTurn}
                   onOpenMp3Modal={handleOpenFullMp3Modal}
                   onDownloadTurnMp3={handleOpenSingleTurnMp3}
+                  onDownloadPdf={() => openScenarioPdfPrintWindow(scenario)}
                 />
 
                 {/* Persistent Consultant Live Notes & Objections Recorder */}
@@ -901,6 +1031,12 @@ export function App() {
         securityConfig={securityConfig}
         onLockScreen={handleLockScreen}
         onConfigUpdated={(newCfg) => setSecurityConfig(newCfg)}
+      />
+
+      {/* PWA Mobile App Install Modal */}
+      <PWAInstallModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
       />
     </div>
   );

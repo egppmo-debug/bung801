@@ -305,17 +305,17 @@ export const Mp3DownloadModal: React.FC<Mp3DownloadModalProps> = ({
             <button
               onClick={handleStartDownload}
               disabled={isLoading}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-orange-950/50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-orange-950/50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isLoading ? (
                 <>
                   <Sparkles className="w-4 h-4 animate-spin text-slate-950" />
-                  <span>{progressStep || 'MP3 음성 생성 중...'}</span>
+                  <span>{progressStep || 'MP3 생성 중...'}</span>
                 </>
               ) : (
                 <>
                   <Download className="w-4 h-4 text-slate-950" />
-                  <span>MP3 파일 생성 및 내려받기</span>
+                  <span>MP3 다운로드</span>
                 </>
               )}
             </button>

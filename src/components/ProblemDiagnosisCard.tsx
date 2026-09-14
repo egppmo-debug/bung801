@@ -184,9 +184,9 @@ export const ProblemDiagnosisCard: React.FC<ProblemDiagnosisCardProps> = ({
               <button
                 type="button"
                 onClick={() => onSelectCategory(recommendedCategory)}
-                className="text-[11px] font-bold text-orange-300 hover:text-orange-200 bg-orange-950/70 hover:bg-orange-900/80 border border-orange-500/50 px-2.5 py-1 rounded-lg transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                className="text-[11px] font-bold text-orange-950 dark:text-orange-200 bg-orange-100 dark:bg-orange-950/70 hover:bg-orange-200 dark:hover:bg-orange-900/80 border border-orange-400 dark:border-orange-500/50 px-2.5 py-1 rounded-lg transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
               >
-                <Sparkles className="w-3 h-3 text-orange-400" />
+                <Sparkles className="w-3 h-3 text-orange-700 dark:text-orange-400" />
                 <span>AI 추천 [{recCatInfo.code}]로 즉시 변경</span>
               </button>
             )}
@@ -207,41 +207,41 @@ export const ProblemDiagnosisCard: React.FC<ProblemDiagnosisCardProps> = ({
                   onClick={() => onSelectCategory(catKey)}
                   className={`p-3 rounded-xl border text-left transition relative flex flex-col justify-between cursor-pointer group ${
                     isSelected
-                      ? 'bg-orange-500/20 border-orange-500 text-orange-200 shadow-lg shadow-orange-950/50 ring-2 ring-orange-500/60'
+                      ? 'bg-orange-500 text-black border-orange-500 shadow-md ring-2 ring-orange-500/60'
                       : isTopRec
-                      ? 'bg-slate-900 border-amber-500/60 hover:border-amber-400 text-slate-300'
-                      : 'bg-slate-950/60 hover:bg-slate-800/80 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                      ? 'bg-amber-100 dark:bg-slate-900 border-amber-500/60 hover:border-amber-400 text-amber-950 dark:text-slate-100'
+                      : 'bg-white dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-slate-200'
                   }`}
                 >
                   <div>
                     {/* Top badging */}
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
+                      <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
                         isSelected
-                          ? 'bg-orange-500 text-slate-950'
+                          ? 'bg-black text-white'
                           : isTopRec
-                          ? 'bg-amber-500 text-slate-950'
-                          : 'bg-slate-800 text-slate-400 group-hover:text-slate-200'
+                          ? 'bg-amber-500 text-black font-extrabold'
+                          : 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-200'
                       }`}>
                         {cat.code}
                       </span>
 
                       {isTopRec && (
-                        <span className="text-[9px] font-bold text-amber-300 bg-amber-950/90 border border-amber-500/50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                        <span className="text-[9px] font-black text-amber-950 dark:text-amber-300 bg-amber-200 dark:bg-amber-950/90 border border-amber-400 dark:border-amber-500/50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
                           ⭐ AI 추천
                         </span>
                       )}
                     </div>
 
-                    <div className={`text-xs font-bold leading-tight ${isSelected ? 'text-white' : 'text-slate-200'}`}>
+                    <div className={`text-xs font-bold leading-tight ${isSelected ? 'text-black font-extrabold' : 'text-slate-900 dark:text-slate-100'}`}>
                       {cat.name}
                     </div>
                   </div>
 
-                  <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-400">적합도:</span>
-                    <span className={`text-[11px] font-extrabold ${
-                      score >= 90 ? 'text-orange-400' : score >= 70 ? 'text-amber-400' : 'text-slate-400'
+                  <div className={`mt-2.5 pt-2 border-t flex items-center justify-between ${isSelected ? 'border-black/20 text-black' : 'border-slate-200 dark:border-slate-800/80'}`}>
+                    <span className={`text-[10px] font-semibold ${isSelected ? 'text-black' : 'text-slate-600 dark:text-slate-400'}`}>적합도:</span>
+                    <span className={`text-[11px] font-black ${
+                      isSelected ? 'text-black' : score >= 90 ? 'text-orange-700 dark:text-orange-400' : score >= 70 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'
                     }`}>
                       {score}%
                     </span>
@@ -249,7 +249,7 @@ export const ProblemDiagnosisCard: React.FC<ProblemDiagnosisCardProps> = ({
 
                   {isSelected && (
                     <div className="absolute top-2 right-2">
-                      <span className="w-2 h-2 rounded-full bg-orange-400 ring-2 ring-orange-950"></span>
+                      <span className="w-2 h-2 rounded-full bg-black ring-2 ring-orange-400"></span>
                     </div>
                   )}
                 </button>

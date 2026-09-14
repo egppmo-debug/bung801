@@ -95,14 +95,14 @@ export const ConsultantLiveNotes: React.FC<ConsultantLiveNotesProps> = ({
   };
 
   const handleCopy = () => {
-    if (!notes.trim()) return;
+    if (!notes?.trim()) return;
     navigator.clipboard.writeText(notes);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleClear = () => {
-    if (!notes.trim()) return;
+    if (!notes?.trim()) return;
     if (window.confirm('작성 중인 실전 메모를 모두 지우시겠습니까? (삭제 후 복구할 수 없습니다)')) {
       onChangeNotes('');
       setSaveStatus('saved');
@@ -191,18 +191,18 @@ export const ConsultantLiveNotes: React.FC<ConsultantLiveNotesProps> = ({
           <button
             id="btn-copy-live-notes"
             onClick={handleCopy}
-            disabled={!notes.trim()}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:pointer-events-none text-slate-200 text-xs font-medium border border-slate-700 transition flex items-center gap-1.5"
+            disabled={!notes?.trim()}
+            className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:pointer-events-none text-slate-900 dark:text-slate-200 text-xs font-bold border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 cursor-pointer"
             title="메모 복사하기"
           >
             {copied ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-300">복사됨</span>
+                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-emerald-700 dark:text-emerald-300 font-bold">복사됨</span>
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5 text-slate-400" />
+                <Copy className="w-3.5 h-3.5 text-slate-700 dark:text-slate-400" />
                 <span>복사</span>
               </>
             )}
@@ -211,8 +211,8 @@ export const ConsultantLiveNotes: React.FC<ConsultantLiveNotesProps> = ({
           <button
             id="btn-clear-live-notes"
             onClick={handleClear}
-            disabled={!notes.trim()}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 border border-slate-700 disabled:opacity-40 disabled:pointer-events-none transition"
+            disabled={!notes?.trim()}
+            className="p-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-slate-900 dark:text-slate-400 hover:text-rose-700 dark:hover:text-rose-300 border border-slate-300 dark:border-slate-700 disabled:opacity-40 disabled:pointer-events-none transition cursor-pointer"
             title="메모 전체 비우기"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -223,21 +223,21 @@ export const ConsultantLiveNotes: React.FC<ConsultantLiveNotesProps> = ({
       {/* Quick Objection / Memo Tag Buttons */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-[11px] text-slate-400">
-          <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-            <Sparkles className="w-3 h-3 text-orange-400" />
+          <span className="font-semibold text-slate-800 dark:text-slate-300 flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3 text-orange-500" />
             <span>실전 고객 단골 반론 & 약속 퀵클릭 입력 (클릭 시 메모에 즉시 추가):</span>
           </span>
           <div className="flex items-center gap-2">
             <button
               onClick={handleInsertCurrentTurnTag}
-              className="text-[10px] text-amber-300 hover:text-amber-200 bg-amber-950/60 hover:bg-amber-900/60 px-2 py-0.5 rounded border border-amber-500/30 flex items-center gap-1 transition"
+              className="text-[10px] text-amber-950 dark:text-amber-200 hover:text-amber-900 bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/60 px-2 py-0.5 rounded border border-amber-400 dark:border-amber-500/30 flex items-center gap-1 font-bold transition cursor-pointer"
             >
-              <Plus className="w-3 h-3" />
+              <Plus className="w-3 h-3 text-amber-800 dark:text-amber-300" />
               <span>현재 턴 {currentTurn?.turnNumber || currentTurnIndex + 1} 태그</span>
             </button>
             <button
               onClick={handleInsertTimestamp}
-              className="text-[10px] text-slate-400 hover:text-slate-200 bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded border border-slate-700 flex items-center gap-1 transition"
+              className="text-[10px] text-slate-900 dark:text-slate-300 hover:text-black bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 flex items-center gap-1 font-bold transition cursor-pointer"
             >
               <Clock className="w-3 h-3" />
               <span>시간 삽입</span>
@@ -253,11 +253,11 @@ export const ConsultantLiveNotes: React.FC<ConsultantLiveNotesProps> = ({
                 key={i}
                 id={`btn-quick-objection-${i}`}
                 onClick={() => appendText(`${obj.prefix}\n${obj.text}`)}
-                className="px-2.5 py-1 rounded-lg bg-slate-950/70 hover:bg-slate-800 border border-slate-800 hover:border-orange-500/40 text-slate-300 hover:text-slate-100 text-xs transition flex items-center gap-1.5 group"
+                className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-950/70 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 hover:border-orange-500/60 text-slate-900 dark:text-slate-200 hover:text-black dark:hover:text-slate-100 text-xs font-bold transition flex items-center gap-1.5 group cursor-pointer"
               >
-                <Icon className="w-3 h-3 text-orange-400 group-hover:scale-110 transition-transform" />
-                <span className="font-medium text-[11.5px]">{obj.label}</span>
-                <Plus className="w-3 h-3 text-slate-500 group-hover:text-orange-400" />
+                <Icon className="w-3 h-3 text-orange-600 dark:text-orange-400 group-hover:scale-110 transition-transform" />
+                <span className="font-bold text-[11.5px]">{obj.label}</span>
+                <Plus className="w-3 h-3 text-slate-600 dark:text-slate-500 group-hover:text-orange-500" />
               </button>
             );
           })}

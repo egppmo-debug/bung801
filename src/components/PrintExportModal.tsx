@@ -7,9 +7,11 @@ import {
   Printer, 
   FileText, 
   Share2, 
-  Building2 
+  Building2,
+  FileDown
 } from 'lucide-react';
 import { GeneratedScenario } from '../types';
+import { openScenarioPdfPrintWindow } from '../utils/pdfExport';
 
 interface PrintExportModalProps {
   isOpen: boolean;
@@ -62,7 +64,7 @@ export const PrintExportModal: React.FC<PrintExportModalProps> = ({
     });
     out += `===========================================================\n\n`;
 
-    if (scenario.consultantLiveNotes && scenario.consultantLiveNotes.trim()) {
+    if (scenario?.consultantLiveNotes?.trim()) {
       out += `===========================================================\n`;
       out += `[컨설턴트 실전 시뮬레이션 라이브 메모 & 고객 반론(Objection) 기록]\n`;
       out += `${scenario.consultantLiveNotes.trim()}\n`;
@@ -118,33 +120,39 @@ export const PrintExportModal: React.FC<PrintExportModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition"
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 transition cursor-pointer"
+            title="닫기"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Action Toolbar */}
-        <div className="px-5 py-3 bg-slate-950/80 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+        <div className="px-5 py-3 bg-slate-950/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
           <div className="text-xs text-slate-300">
-            총 <strong className="text-orange-400">{scenario.dialogueTurns.length}턴</strong> 대본 (약 {scenario.dialogueTurns.reduce((acc, t) => acc + t.content.length, 0).toLocaleString()}자)
+            총 <strong className="text-orange-400 font-bold">{scenario.dialogueTurns.length}턴</strong> 대본 (약 {scenario.dialogueTurns.reduce((acc, t) => acc + t.content.length, 0).toLocaleString()}자)
           </div>
 
           <div className="flex items-center gap-2">
             <button
               id="btn-modal-copy-all"
               onClick={handleCopyAll}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition flex items-center gap-1.5"
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm ${
+                copiedAll
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400 ring-2 ring-emerald-400/40'
+                  : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-600'
+              }`}
+              title="대본 전체 텍스트 클립보드 복사"
             >
               {copiedAll ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-emerald-300">전체 복사 완료!</span>
+                  <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
+                  <span className="text-white font-black">복사됨</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>대본 전체 복사</span>
+                  <Copy className="w-3.5 h-3.5 text-slate-200" />
+                  <span className="text-white font-bold">복사</span>
                 </>
               )}
             </button>
@@ -152,19 +160,31 @@ export const PrintExportModal: React.FC<PrintExportModalProps> = ({
             <button
               id="btn-modal-download-txt"
               onClick={handleDownloadTxt}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition flex items-center gap-1.5"
+              className="px-3.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm border border-sky-500 cursor-pointer"
+              title="텍스트(.txt) 파일로 다운로드"
             >
-              <Download className="w-3.5 h-3.5 text-slate-400" />
-              <span>.TXT 다운로드</span>
+              <Download className="w-3.5 h-3.5 text-white stroke-[2.5]" />
+              <span className="text-white font-bold">다운</span>
+            </button>
+
+            <button
+              id="btn-modal-download-pdf"
+              onClick={() => openScenarioPdfPrintWindow(scenario)}
+              className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm border border-rose-500 cursor-pointer"
+              title="리포트 서식 깔끔한 PDF로 저장 / 인쇄"
+            >
+              <FileDown className="w-3.5 h-3.5 text-white" />
+              <span className="text-white font-bold">PDF</span>
             </button>
 
             <button
               id="btn-modal-print"
               onClick={handlePrint}
-              className="px-3.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-slate-950 text-xs font-bold transition flex items-center gap-1.5 shadow-sm shadow-orange-950"
+              className="px-3.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-black text-xs font-extrabold transition flex items-center gap-1.5 shadow-sm border border-orange-400 cursor-pointer"
+              title="대본 인쇄하기"
             >
-              <Printer className="w-3.5 h-3.5" />
-              <span>대본 인쇄하기</span>
+              <Printer className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+              <span className="text-black font-black">인쇄</span>
             </button>
           </div>
         </div>

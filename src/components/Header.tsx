@@ -3,8 +3,8 @@ import {
   Building2, 
   Sparkles, 
   Printer, 
+  Mic2, 
   FileText, 
-  FolderOpen,
   Headphones,
   User,
   Edit2,
@@ -12,7 +12,8 @@ import {
   RotateCcw,
   Plus,
   Sun,
-  Moon
+  Moon,
+  FileDown
 } from 'lucide-react';
 import { ConsultingCategory, DEFAULT_CONSULTANT_NAME } from '../types';
 import { CATEGORY_INFO } from '../data/sampleReports';
@@ -20,10 +21,11 @@ import { CATEGORY_INFO } from '../data/sampleReports';
 interface HeaderProps {
   currentCategory: ConsultingCategory;
   onSelectCategory: (category: ConsultingCategory) => void;
-  onOpenRoleplay?: () => void;
+  onOpenRoleplay: () => void;
   onOpenExport: () => void;
   onOpenLoadReport: () => void;
   onOpenMp3Modal: () => void;
+  onDownloadPdf?: () => void;
   onToggleInput: () => void;
   isInputOpen: boolean;
   isGenerating: boolean;
@@ -32,6 +34,7 @@ interface HeaderProps {
   hasScenario: boolean;
   onResetNewScenario: () => void;
   onOpenAdminCenter?: () => void;
+  onOpenInstallModal?: () => void;
   isDarkMode?: boolean;
   onToggleTheme?: () => void;
 }
@@ -43,6 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenExport,
   onOpenLoadReport,
   onOpenMp3Modal,
+  onDownloadPdf,
   onToggleInput,
   isInputOpen,
   isGenerating,
@@ -51,6 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
   hasScenario,
   onResetNewScenario,
   onOpenAdminCenter,
+  onOpenInstallModal,
   isDarkMode = false,
   onToggleTheme,
 }) => {
@@ -58,7 +63,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [editNameInput, setEditNameInput] = useState(consultantName || DEFAULT_CONSULTANT_NAME);
 
   const handleSaveConsultantName = () => {
-    const trimmed = editNameInput.trim();
+    const trimmed = (editNameInput || '').trim();
     if (trimmed) {
       onChangeConsultantName(trimmed);
     }
@@ -140,25 +145,14 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action Buttons (Desktop) */}
           <div className="flex items-center gap-2 shrink-0">
-            {/* Load Report Button */}
-            <button
-              id="btn-load-report"
-              onClick={onOpenLoadReport}
-              className="px-3 py-2 text-xs font-bold rounded-lg bg-orange-950/70 hover:bg-orange-900 text-orange-200 border border-orange-500/40 transition-all flex items-center gap-1.5 shadow-sm shadow-orange-950 whitespace-nowrap cursor-pointer"
-              title="법인 분석 리포트 파일/텍스트 불러오기"
-            >
-              <FolderOpen className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-              <span>리포트 불러오기</span>
-            </button>
-
             {/* Input Toggle */}
             <button
               id="btn-toggle-input"
               onClick={onToggleInput}
-              className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              className={`px-3 py-2 text-xs font-bold rounded-lg border transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
                 isInputOpen
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm shadow-amber-950'
-                  : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700'
+                  ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-950 dark:text-amber-200 border-amber-500 shadow-sm'
+                  : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-700'
               }`}
               title={isInputOpen ? "리포트 패널 닫기" : "리포트 직접 수정"}
             >
@@ -166,29 +160,54 @@ export const Header: React.FC<HeaderProps> = ({
               <span>{isInputOpen ? '닫기' : '수정'}</span>
             </button>
 
+            {/* PDF Download Button */}
+            {hasScenario && onDownloadPdf && (
+              <button
+                id="btn-header-pdf"
+                onClick={onDownloadPdf}
+                className="px-3 py-2 text-xs font-bold rounded-lg bg-rose-100 dark:bg-rose-950/80 hover:bg-rose-200 dark:hover:bg-rose-900 text-rose-950 dark:text-rose-200 border border-rose-400 dark:border-rose-500/40 transition-all flex items-center gap-1.5 shadow-sm whitespace-nowrap cursor-pointer"
+                title="상담 시나리오 및 분석 리포트 PDF 저장"
+              >
+                <FileDown className="w-3.5 h-3.5 text-rose-700 dark:text-rose-400 shrink-0" />
+                <span>PDF</span>
+              </button>
+            )}
+
             {/* MP3 Download Button */}
             {hasScenario && (
               <button
                 id="btn-header-mp3"
                 onClick={onOpenMp3Modal}
-                className="px-3 py-2 text-xs font-bold rounded-lg bg-emerald-950/70 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-950 whitespace-nowrap cursor-pointer"
+                className="px-3 py-2 text-xs font-bold rounded-lg bg-emerald-100 dark:bg-emerald-950/70 hover:bg-emerald-200 dark:hover:bg-emerald-900 text-emerald-950 dark:text-emerald-200 border border-emerald-400 dark:border-emerald-500/40 transition-all flex items-center gap-1.5 shadow-sm whitespace-nowrap cursor-pointer"
                 title="상담 대본 MP3 음성 파일 다운로드"
               >
-                <Headphones className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>MP3 다운</span>
+                <Headphones className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 shrink-0" />
+                <span>MP3</span>
               </button>
             )}
+
+            {/* Roleplay Button */}
+            <button
+              id="btn-open-roleplay"
+              onClick={onOpenRoleplay}
+              disabled={!hasScenario}
+              className="px-3 py-2 text-xs font-bold rounded-lg bg-indigo-100 dark:bg-indigo-950/80 hover:bg-indigo-200 dark:hover:bg-indigo-900 text-indigo-950 dark:text-indigo-200 border border-indigo-400 dark:border-indigo-500/40 transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap cursor-pointer"
+              title="실전 대화 롤플레잉 연습"
+            >
+              <Mic2 className="w-3.5 h-3.5 text-indigo-700 dark:text-indigo-400 shrink-0" />
+              <span>롤플레잉</span>
+            </button>
 
             {/* Print/Copy Export */}
             <button
               id="btn-open-export"
               onClick={onOpenExport}
               disabled={!hasScenario}
-              className="px-3 py-2 text-xs font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 transition-all flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap cursor-pointer"
+              className="px-3 py-2 text-xs font-bold rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 transition-all flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap cursor-pointer"
               title="인쇄 및 대화 복사"
             >
-              <Printer className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>인쇄/복사</span>
+              <Printer className="w-3.5 h-3.5 text-slate-900 dark:text-slate-200 shrink-0" />
+              <span>인쇄</span>
             </button>
 
             {/* New Scenario Reset */}
@@ -196,7 +215,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="btn-reset-new"
                 onClick={onResetNewScenario}
-                className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg border border-slate-800 transition cursor-pointer"
+                className="p-2 text-slate-900 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg border border-slate-300 dark:border-slate-700 transition cursor-pointer"
                 title="새 상담 리포트 작성 (초기화)"
               >
                 <Plus className="w-4 h-4" />
@@ -211,23 +230,22 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="btn-header-theme-toggle"
                 onClick={onToggleTheme}
-                className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 transition-all flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
+                className="px-2.5 py-1.5 text-xs font-bold rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 transition-all flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
                 title={isDarkMode ? "라이트 모드로 전환" : "다크 모드로 전환"}
               >
                 {isDarkMode ? (
                   <>
                     <Sun className="w-4 h-4 text-amber-400 animate-in spin-in-180 duration-300" />
-                    <span className="text-amber-300 font-medium">라이트</span>
+                    <span className="text-amber-300 font-bold">라이트</span>
                   </>
                 ) : (
                   <>
-                    <Moon className="w-4 h-4 text-indigo-500 animate-in spin-in-180 duration-300" />
-                    <span className="text-slate-600 font-medium">다크</span>
+                    <Moon className="w-4 h-4 text-indigo-700 animate-in spin-in-180 duration-300" />
+                    <span className="text-slate-950 font-extrabold">다크</span>
                   </>
                 )}
               </button>
             )}
-
           </div>
         </div>
 
@@ -295,18 +313,17 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Utility Icons (Right) */}
             <div className="flex items-center gap-1.5 shrink-0">
-
               {onToggleTheme && (
                 <button
                   id="btn-header-theme-toggle-mobile"
                   onClick={onToggleTheme}
-                  className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 rounded-lg border border-slate-800 transition"
+                  className="p-1.5 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-800/80 rounded-lg border border-slate-700 dark:border-slate-800 transition"
                   title={isDarkMode ? "라이트 모드로 전환" : "다크 모드로 전환"}
                 >
                   {isDarkMode ? (
                     <Sun className="w-3.5 h-3.5 text-amber-400" />
                   ) : (
-                    <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                    <Moon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                   )}
                 </button>
               )}
@@ -329,25 +346,14 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Action Buttons (Mobile / Tablet) */}
             <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-              {/* Load Report Button */}
-              <button
-                id="btn-load-report-mobile"
-                onClick={onOpenLoadReport}
-                className="px-2 sm:px-2.5 py-1 text-xs font-bold rounded-lg bg-orange-950/80 hover:bg-orange-900 text-orange-200 border border-orange-500/40 transition flex items-center gap-1 shadow-sm whitespace-nowrap"
-                title="리포트 파일/텍스트 불러오기"
-              >
-                <FolderOpen className="w-3 h-3 text-orange-400 shrink-0" />
-                <span>불러오기</span>
-              </button>
-
               {/* Input Toggle */}
               <button
                 id="btn-toggle-input-mobile"
                 onClick={onToggleInput}
-                className={`px-2 sm:px-2.5 py-1 text-xs font-medium rounded-lg border transition flex items-center gap-1 whitespace-nowrap ${
+                className={`px-2 sm:px-2.5 py-1 text-xs font-bold rounded-lg border transition flex items-center gap-1 whitespace-nowrap ${
                   isInputOpen
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                    : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700'
+                    ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-950 dark:text-amber-200 border-amber-500'
+                    : 'bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-700'
                 }`}
                 title={isInputOpen ? "리포트 패널 닫기" : "리포트 직접 수정"}
               >
@@ -355,16 +361,42 @@ export const Header: React.FC<HeaderProps> = ({
                 <span>{isInputOpen ? '닫기' : '수정'}</span>
               </button>
 
+              {/* PDF Download Button */}
+              {hasScenario && onDownloadPdf && (
+                <button
+                  id="btn-header-pdf-mobile"
+                  onClick={onDownloadPdf}
+                  className="px-2 sm:px-2.5 py-1 text-xs font-bold rounded-lg bg-rose-100 dark:bg-rose-950/80 hover:bg-rose-200 dark:hover:bg-rose-900 text-rose-950 dark:text-rose-200 border border-rose-400 dark:border-rose-500/40 transition flex items-center gap-1 whitespace-nowrap cursor-pointer"
+                  title="PDF 저장"
+                >
+                  <FileDown className="w-3 h-3 text-rose-700 dark:text-rose-400 shrink-0" />
+                  <span>PDF</span>
+                </button>
+              )}
+
               {/* MP3 Download Button */}
               {hasScenario && (
                 <button
                   id="btn-header-mp3-mobile"
                   onClick={onOpenMp3Modal}
-                  className="px-2 sm:px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 transition flex items-center gap-1 whitespace-nowrap"
+                  className="px-2 sm:px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 dark:hover:bg-emerald-900 text-emerald-950 dark:text-emerald-200 border border-emerald-400 dark:border-emerald-500/40 transition flex items-center gap-1 whitespace-nowrap"
                   title="MP3 음성 파일 다운로드"
                 >
-                  <Headphones className="w-3 h-3 text-emerald-400 shrink-0" />
+                  <Headphones className="w-3 h-3 text-emerald-700 dark:text-emerald-400 shrink-0" />
                   <span>MP3</span>
+                </button>
+              )}
+
+              {/* Tablet only: Roleplay Button */}
+              {hasScenario && (
+                <button
+                  id="btn-open-roleplay-mobile"
+                  onClick={onOpenRoleplay}
+                  className="hidden sm:flex px-2 sm:px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-100 dark:bg-indigo-950/80 hover:bg-indigo-200 dark:hover:bg-indigo-900 text-indigo-950 dark:text-indigo-200 border border-indigo-400 dark:border-indigo-500/40 transition items-center gap-1 whitespace-nowrap"
+                  title="실전 대화 롤플레잉"
+                >
+                  <Mic2 className="w-3 h-3 text-indigo-700 dark:text-indigo-400 shrink-0" />
+                  <span>롤플레잉</span>
                 </button>
               )}
 
@@ -373,10 +405,10 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   id="btn-open-export-mobile"
                   onClick={onOpenExport}
-                  className="hidden sm:flex px-2 py-1 text-xs font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 transition items-center gap-1 whitespace-nowrap"
+                  className="hidden sm:flex px-2 py-1 text-xs font-bold rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 transition items-center gap-1 whitespace-nowrap"
                   title="인쇄 및 복사"
                 >
-                  <Printer className="w-3 h-3 text-slate-400 shrink-0" />
+                  <Printer className="w-3 h-3 text-slate-900 dark:text-slate-200 shrink-0" />
                   <span>인쇄</span>
                 </button>
               )}
@@ -386,7 +418,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   id="btn-reset-new-mobile"
                   onClick={onResetNewScenario}
-                  className="p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg border border-slate-800 transition"
+                  className="p-1 text-slate-900 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg border border-slate-300 dark:border-slate-700 transition"
                   title="새 상담 리포트 작성"
                 >
                   <Plus className="w-3.5 h-3.5" />

@@ -2,7 +2,6 @@ import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
-import { Mp3Encoder } from '@breezystack/lamejs';
 import dotenv from 'dotenv';
 import { CorporateReport, GeneratedScenario, ConsultingCategory, DEFAULT_CONSULTANT_NAME, CompanyProblem, CategorySuitability } from './src/types';
 import { CATEGORY_INFO } from './src/data/sampleReports';
@@ -10,12 +9,11 @@ import { createResilientScenario } from './src/data/fallbackScenarioGenerator';
 import { diagnoseCorporateReport } from './src/utils/problemDiagnoser';
 
 dotenv.config();
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-export const app = express();
+const app = express();
 const PORT = 3000;
 
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '10mb' }));
 
 // Resilient Gemini Model Candidates (prioritizing gemini-3.8-flash for stability)
 const CANDIDATE_GEMINI_MODELS = [
@@ -64,7 +62,7 @@ async function callGeminiWithFallback(
 
 // Lazy/Safe Gemini Client
 function getGeminiClient(): GoogleGenAI | null {
-  const apiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '').trim();
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return null;
   }
@@ -80,10 +78,9 @@ function getGeminiClient(): GoogleGenAI | null {
 
 // API: Health check
 app.get('/api/health', (req, res) => {
-  const hasKey = Boolean((process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '').trim());
   res.json({
     status: 'ok',
-    hasApiKey: hasKey,
+    hasApiKey: Boolean(process.env.GEMINI_API_KEY),
   });
 });
 
@@ -128,44 +125,8 @@ app.post('/api/report/analyze-cretop', async (req, res) => {
 
     const ai = getGeminiClient();
     if (!ai) {
-      console.warn('[analyze-cretop] GEMINI_API_KEY not found, using resilient diagnosis engine');
-      const fallbackReport: CorporateReport = {
-        companyName: fileName ? fileName.replace(/\.[^/.]+$/, '') : '(주)동원오토모티브',
-        ceoName: '정동원',
-        consultantName: defaultName,
-        industry: '친환경차 알루미늄 다이캐스팅 부품 제조',
-        establishedYear: 2015,
-        annualRevenue: '95억 원',
-        operatingProfit: '8억 5,000만 원',
-        retainedEarnings: '24억 원',
-        provisionalPayment: '0원',
-        shareholders: '대표이사 80%, 배우자 20%',
-        employeeCount: 28,
-        articlesStatus: '2015년 원시정관 그대로 방치 (임원퇴직금 규정 부재)',
-        debtRatio: '145%',
-        category: 'category_2',
-        creditRating: 'BBB0',
-        cashFlowRating: 'CR-3',
-        cretopSummary: '미처분이익잉여금(24억) 누적으로 인한 비상장주식 가치 급등 및 원시정관 방치로 임원 퇴직 시 전액 근로소득세 과세 리스크',
-        sourceDocName: fileName || '크레탑 분석 리포트',
-        sourceType: sourceType || 'local_file',
-        customNote: '[안내] GEMINI_API_KEY 미설정으로 사전 검증 분석 엔진이 실행되었습니다. .env 파일에 API 키를 설정하면 Gemini AI의 심층 분석이 활성화됩니다.',
-      };
-      const diagnosis = diagnoseCorporateReport(fallbackReport);
-      fallbackReport.recommendedCategory = diagnosis.recommendedCategory;
-      fallbackReport.recommendationReason = diagnosis.recommendationReason;
-      fallbackReport.companyProblems = diagnosis.companyProblems;
-      fallbackReport.categorySuitabilities = diagnosis.categorySuitabilities;
-      fallbackReport.category = diagnosis.recommendedCategory;
-
-      return res.json({
-        success: true,
-        report: fallbackReport,
-        recommendedCategory: fallbackReport.recommendedCategory,
-        recommendationReason: fallbackReport.recommendationReason,
-        companyProblems: fallbackReport.companyProblems,
-        categorySuitabilities: fallbackReport.categorySuitabilities,
-        cretopSummary: fallbackReport.cretopSummary,
+      return res.status(503).json({
+        error: 'GEMINI_API_KEY가 설정되지 않았습니다. 상단 Settings > Secrets 패널을 확인해 주세요.',
       });
     }
 
@@ -406,46 +367,96 @@ app.post('/api/scenario/generate', async (req, res) => {
 
     const ai = getGeminiClient();
     if (!ai) {
-      console.warn('[scenario/generate] GEMINI_API_KEY not found, generating resilient consulting scenario');
-      const fallback = createResilientScenario(report);
-      return res.json({ scenario: fallback });
+      return res.status(503).json({
+        error: 'GEMINI_API_KEY가 설정되지 않았습니다. 상단 Settings > Secrets 패널을 확인해 주세요.',
+      });
     }
 
-    const consultantName = (report.consultantName || DEFAULT_CONSULTANT_NAME).trim();
+    const consultantName = String(report?.consultantName || DEFAULT_CONSULTANT_NAME).trim();
     report.consultantName = consultantName;
 
     const categoryDetail = CATEGORY_INFO[report.category] || CATEGORY_INFO.category_2;
 
+    // Build dedicated deep guidelines for the selected category
+    let categorySpecificGuideline = '';
+    switch (report.category) {
+      case 'category_1':
+        categorySpecificGuideline = `
+[카테고리 1 (경영 효율화 및 제도 정비) 특화 필수 지침]
+- 핵심 주제: 임원 퇴직금 지급규정 부재 및 원시정관 미비 리스크, 상법 제388조, 법인세법 시행령 제44조.
+- 리스크: 규정 없이 지급된 퇴직금 전액 손금불산입, 대표 상여처분으로 소득세 최고세율 49.5% 부과(세금만 수억 원), 법인세 수억 원 이중과세, 대법원 판례(2004두10280).
+- 대표이사 핵심 반론: "10년 넘게 기장 세무사 사무실에서 표준정관으로 아무 문제 없다고 했는데 왜 이제 와서 문제냐?", "대표 퇴직금 3배수로 올리면 국세청에서 부당행위계산부인으로 세무조사 들어오지 않느냐?"
+- 컨설턴트 명쾌한 해명: 정기결산과 퇴직 시점 세무조사의 차이, 소득세법 제22조 및 법인세법 시행령 제44조의4에 부합하는 직급별 규정 제정 및 주총 특별결의 공증 시 완벽한 법적 보호, CEO 경영인정기보험 손비 처리를 통한 매년 법인세 절세 및 퇴직재원 비축 원스톱 플랜.
+`;
+        break;
+      case 'category_3':
+        categorySpecificGuideline = `
+[카테고리 3 (경정청구 / 세금환급) 특화 필수 지침]
+- 핵심 주제: 국세기본법 제45조의2 경정청구(과오납 세금 환급), 조특법 제29조의7 고용증대세액공제 및 통합고용세액공제 5개년 누락분 환급.
+- 리스크: 국세기본법 제45조의2 제척기간 5년 만료 시 정당한 환급금 영구 소멸(8,000만~1억 5,000만 원 영구 소멸 위기), 기장 세무사의 사후 고용유지 관리 책임 회피로 인한 공제 누락.
+- 대표이사 핵심 반론: "기장 세무사가 매년 다 알아서 잘 신고해 줬을 텐데 세금을 더 냈다는 게 말이 되냐?", "낸 세금 돌려달라고 국세청에 신청하면 괘씸죄로 세무조사 나오거나 기장 세무사와 틀어지는 것 아니냐?"
+- 컨설턴트 명쾌한 해명: 경정청구는 국세기본법이 보장한 납세자의 헌법적 권리이며 국세청 훈령상 세무조사 사유가 될 수 없음, 기존 기장 세무사 변경 전혀 불필요(과거 5개년 환급만 조세전문팀이 특화 수행), 홈택스 서류 다운로드만으로 비대면 처리 후 국세환급가산금(이자) 포함 법인통장 현금 입금.
+`;
+        break;
+      case 'category_4':
+        categorySpecificGuideline = `
+[카테고리 4 (미래 성장 및 인증 / M&A) 특화 필수 지침]
+- 핵심 주제: 기업부설연구소 사후관리 컴플라이언스 및 조특법 제10조 R&D 세액공제(25%), 벤처기업 및 이노비즈 인증, 기업가치(Valuation) 극대화.
+- 리스크: 연구노트 미작성 및 연구원 타업무 겸직 시 과거 5개년 R&D 세액공제 전액 소급 추징 및 징벌적 과소신고 가산세 40% 부과, 벤처·이노비즈 미보유로 법인세 50% 감면 및 정책금융 우대 혜택 상실.
+- 대표이사 핵심 반론: "우리 회사는 소프트웨어나 바이오가 아니라 전통 제조업인데 거창한 신기술도 없이 벤처나 이노비즈 인증이 실제로 나오냐?"
+- 컨설턴트 명쾌한 해명: 뿌리 제조업의 공정 혁신 및 소부장 국산화 기술은 벤처 평가에서 최고 가산점 대상, KOITA 연구노트 전자 표준시스템 구축으로 세무조사 100% 방어, 전문 경영지도사 밀착 코칭을 통한 95% 합격률 및 스톡옵션 비과세(2억) 연계.
+`;
+        break;
+      case 'category_5':
+        categorySpecificGuideline = `
+[카테고리 5 (가업 승계 및 자산 이전) 특화 필수 지침]
+- 핵심 주제: 상증세법상 비상장주식 보충적 평가액 관리, 상증세법 제18조의2 가업상속공제(600억)와 조특법 제30조의5 증여세 과세특례(10%), 가업승계 사전 플랜.
+- 리스크: 비상장주식 순손익 60% + 순자산 40% 가중평균으로 주당 가치 10~20배 폭등, 대표 유고 시 현금 유동성 부족으로 상속세 30억~45억 원을 못 내 알짜 지분 물납 또는 경영권 강제 피탈.
+- 대표이사 핵심 반론: "뉴스 보니까 가업상속공제 600억 원 받으면 세금 0원이라던데 그냥 나중에 물려주면 되는 것 아니냐?"
+- 컨설턴트 명쾌한 해명: 가업상속공제 600억은 상속 후 5년간 고용 90% 유지, 주된 업종 변경 금지 등 위반 시 연 10% 이자 붙여 전액 추징당하는 '독이 든 성배', 조특법 제30조의5 증여세 과세특례 10%로 생전에 주가 낮을 때 조기 지분 분산하고 CEO 경영인정기보험으로 상속세 납부용 현금을 법인 비용으로 마련하는 사전 플랜이 압도적으로 안전.
+`;
+        break;
+      case 'category_2':
+      default:
+        categorySpecificGuideline = `
+[카테고리 2 (재무구조 및 세무최적화) 특화 필수 지침]
+- 핵심 주제: 누적 미처분이익잉여금 처분 및 가지급금 4.6% 출구전략, 상법 제341조 자기주식 취득 및 이익소각.
+- 리스크: 잉여금 누적으로 비상장주식 보충적 평가액 폭등(액면가 5,000원 → 수만~십만 원), 최고세율 50% 상속세 과표 직격탄, 가지급금 매년 4.6% 인정이자 대표 상여 누진과세 및 차입금 지급이자 손금불산입.
+- 대표이사 핵심 반론: "회사가 돈 잘 벌어 통장에 쌓아둔 잉여금이 왜 폭탄이냐?", "자사주 소각하면 국세청에서 세무조사 나와서 배당소득이나 의제배당으로 부인당하는 것 아니냐?"
+- 컨설턴트 명쾌한 해명: 상법 제341조 배당가능이익 범위 내 적법 취득, 대법원 2019두39247 판례(사업목적과 절차 구비 시 합법 인정), 객관적 주식시가 감정평가 및 주총 결의, 전담 세무사 동석 2차 시뮬레이션.
+`;
+        break;
+    }
+
     const systemInstruction = `
-당신은 '한화피플라이프 대전글로리사업단' 컨설턴트를 위한 최고 수준의 법인 컨설팅 가상 시나리오 생성 AI입니다.
-입력된 '크레탑(CRETOP) 법인 분석 리포트' 데이터를 기반으로, 컨설턴트 '${consultantName}'이 실제 법인 대표를 1:1 대면하여 상담하는 전 과정을 다루는 "긴 분량의 실전 가상 상담 대화 스크립트(최소 12~15턴 이상)"를 100% 한국어로 생성합니다.
+당신은 '한화피플라이프 대전글로리사업단' 컨설턴트를 위한 최고 수준의 대한민국 1등 법인 컨설팅 가상 시나리오 생성 AI입니다.
+입력된 '크레탑(CRETOP) 법인 분석 리포트' 데이터를 기반으로, 컨설턴트 '${consultantName}'이 실제 법인 대표를 1:1 대면하여 상담하는 전 과정을 다루는 "최고 품질의 긴 장문 실전 가상 상담 대화 스크립트(반드시 13~15턴)"를 100% 한국어로 생성합니다.
 
-[필수 대화 분량 및 전개 구조]
-1. 대화 분량:
-- 컨설턴트('${consultantName}')와 대표이사 간의 최소 12턴~15턴 이상의 장문 심층 롤플레잉 대화로 구성하십시오.
-- 단답형 응답을 절대 지양하고, 실제 대면 컨설팅 미팅처럼 상세한 설명, 논리적 반론, 설득 맥락, 구체적 수치(이자율, 세액, 지분율 등)를 포함하십시오.
-- 컨설턴트의 발화자 타이틀(speakerTitle)은 반드시 '한화피플라이프 대전글로리사업단 ${consultantName}'으로 표기하십시오. 1단계 자기소개에서도 "안녕하십니까, 한화피플라이프 대전글로리사업단 ${consultantName}입니다"라고 인사해야 합니다.
-- 컨설턴트는 "대표님, 저희 대전글로리사업단에서 대표님 회사의 최근 크레탑(CRETOP) 기업분석 리포트를 바탕으로 재무제표와 과세 시한폭탄 리스크를 사전 정밀 분석해 왔습니다"와 같이 크레탑 분석 결과를 실제 미팅 대사에서 자연스럽고 권위 있게 인용하십시오.
+[절대 규칙: 대화 분량 및 발화 품질 원칙 - 매우 중요]
+1. 절대 1~2마디의 짧은 단답형이나 형식적인 대사로 끝내지 마십시오. 이전보다 문장이 짧아지거나 형식적이면 절대 안 됩니다!
+2. 모든 발화(턴)의 'content'는 반드시 3~6개 이상의 완전하고 전문적인 문장으로 길고 풍부하게 작성하십시오:
+   - 컨설턴트('${consultantName}') 발화: 정중하고 격조 높은 경어, 구체적인 세법 조문 번호(예: 상법 제388조, 국세기본법 제45조의2, 법인세법 제52조, 조특법 제29조의7, 상증세법 제18조의2), 실제 대법원 판례 번호, 정밀한 계산 수치(인정이자 4.6%, 최고세율 49.5%~50%, 손실액 수억 원 등), 크레탑 지표 인용, 논리적 설득과 반론 격파를 담아 4~6문장 이상의 장문으로 작성하십시오.
+   - 대표이사 발화: 단순한 맞장구나 수긍이 아니라, 중소기업 오너 특유의 현실적인 의구심, 기장 세무사에 대한 신뢰와 의존, 국세청 세무조사에 대한 극심한 두려움, 공장 현장의 자금 압박, 비용 부담 등 날카롭고 생생한 반론과 깊은 고뇌를 3~5문장 이상의 진정성 있는 어조로 작성하십시오.
+3. 선택된 컨설팅 카테고리 [${categoryDetail.code} - ${categoryDetail.name}]의 고유 쟁점에만 100% 집중하여 완전히 차별화된 시나리오를 작성하십시오. 다른 카테고리의 대사를 형식적으로 돌려쓰지 마십시오!
 
-2. 4단계 대화 전개 구조 (순차적 진행 필수):
-  - 1단계 (라포 형성 및 리포트 브리핑): 
-    * 정중하고 품격 있는 한화피플라이프 대전글로리사업단 소속 인사.
-    * 기업의 창업 및 성장 노력에 대한 존중.
-    * 크레탑 기업 현황 및 핵심 재무 지표(매출액, 영업이익, 잉여금, 가지급금, 주주지분, 신용평가등급 등) 사전 분석 리포트 브리핑.
-  - 2단계 (문제점 제기 및 리스크 분석):
-    * 현 상태 유지 및 방치 시 발생할 과세/노무/경영상 시한폭탄 리스크를 구체적인 수치와 손실액 추정으로 설명.
-    * 예: 가지급금 인정이자 4.6% 상여처분 소득세, 지급이자 손금불산입 법인세 추가, 잉여금으로 인한 비상장주식 1주당 가치 급등 및 상속세 50% 과표 직격탄, 정관 미비로 인한 퇴직금 손금불산입 등.
-  - 3단계 (솔루션 제안 및 심층 질의응답):
-    * 법률/세법 근거 제안: 상법(제388조, 제341조 등), 조세특례제한법, 법인세법, 상증세법, 대법원 판례 및 국세청 예규.
-    * 대표의 날카롭고 현실적인 의문/반론 제시 (예: "국세청 세무조사 나오는 것 아니냐?", "기장 세무사는 그냥 놔두라던데?", "자사주 이익소각 세법상 부인당하지 않느냐?", "경정청구하면 괘씸죄 걸리지 않느냐?").
-    * 컨설턴트의 논리적·법적 근거에 기반한 명쾌하고 전문적인 해명 및 3~4단계 해결 솔루션 제시.
-  - 4단계 (실행 절차 및 차기 미팅 유도):
-    * 구체적인 실행 절차(1~4단계 로드맵: 서류검토, 주총/이사회 의사록 공증, 정관 변경, 시뮬레이션 산출 등) 안내.
-    * 대전글로리사업단 전담 세무사/변호사 자문위원 동석 2차 미팅(구체적 시뮬레이션 보고서 지참) 일시를 명확히 제시하여 100% 확정 유도.
+${categorySpecificGuideline}
 
-3. 톤앤매너 및 언어:
-- 100% 한국어 및 TTS 음성 청취에 매우 자연스러운 구어체(말투) 사용.
-- 구체적인 수치 계산 및 실무용어(상법 제388조, 인정이자 4.6%, 비상장주식 보충적 평가액, 가업상속공제 사후관리 등)를 풍부하게 포함하십시오.
+[4단계 대화 전개 구조 (13~15턴 순차 진행)]
+- 1단계 (라포 형성 및 리포트 브리핑, 1~4턴):
+  * 컨설턴트 타이틀은 반드시 '한화피플라이프 대전글로리사업단 ${consultantName}'으로 표기.
+  * 첫인사: "안녕하십니까, [대표자명] 대표님. 한화피플라이프 대전글로리사업단 ${consultantName}입니다."
+  * 기업의 업력과 현장 설비에 대한 진심 어린 존중과 라포 형성.
+  * 크레탑(CRETOP) 공식 데이터 기반 재무 지표(연매출, 영업이익, 잉여금, 가지급금, 임직원수, 정관현황 등)를 권위 있게 브리핑.
+- 2단계 (문제점 제기 및 리스크 분석, 5~8턴):
+  * 해당 카테고리의 고유 리스크를 구체적 수치와 손실액(수천만~수억 원대 추징/손실)으로 생생하게 시각화.
+  * 대표이사의 당혹감과 충격, 기장 세무사가 왜 알려주지 않았는지에 대한 의문 표출.
+- 3단계 (솔루션 제안 및 심층 질의응답, 9~12턴):
+  * 법률/세법 근거 제안: 상법, 법인세법, 조특법, 상증세법, 대법원 판례 및 국세청 예규.
+  * 대표이사의 가장 치명적인 거절/반론(세무조사 괘씸죄, 기장 세무사와 갈등, 국세청 부인 위험 등) 제기.
+  * 컨설턴트의 법적·실무적 근거에 기반한 명쾌하고 압도적인 반론 격파.
+- 4단계 (실행 절차 및 차기 미팅 유도, 13~15턴):
+  * 4단계 실행 프로세스 안내(정밀진단 → 법적결의/공증 → 실행/세무신고 → 사후관리).
+  * 대표이사의 시뮬레이션 보고서 요청 및 대전글로리사업단 전담 세무사/변호사 자문단 동석 2차 미팅(화요일 오후 2시 vs 목요일 오전 10시 택일법) 100% 확정.
 `;
 
     const userPrompt = `
@@ -473,7 +484,7 @@ app.post('/api/scenario/generate', async (req, res) => {
 - 카테고리 핵심 법률: ${categoryDetail.laws.join(' / ')}
 - 추가 컨설턴트 메모/특이사항: ${report.customNote || '없음'}
 
-위 데이터를 토대로 최소 12~15턴의 완성도 높은 실전 가상 상담 대화 스크립트와 분석 요약을 JSON 형식으로 생성해 주십시오.
+위 데이터를 토대로 선택된 카테고리 [${categoryDetail.code}]에 100% 특화된, 절대 짧지 않고 각 턴당 3~6개 문장의 깊이 있는 장문 13~15턴 실전 가상 상담 대화 스크립트와 분석 요약을 JSON 형식으로 생성해 주십시오.
 `;
 
     let scenario: GeneratedScenario | null = null;
@@ -483,7 +494,8 @@ app.post('/api/scenario/generate', async (req, res) => {
         contents: userPrompt,
         config: {
           systemInstruction,
-          temperature: 0.7,
+          temperature: 0.65,
+          maxOutputTokens: 8192,
           responseMimeType: 'application/json',
           responseSchema: {
             type: Type.OBJECT,
@@ -537,7 +549,10 @@ app.post('/api/scenario/generate', async (req, res) => {
                     speaker: { type: Type.STRING, description: 'consultant or ceo' },
                     speakerTitle: { type: Type.STRING },
                     emotion: { type: Type.STRING, description: '말투/행동 지문' },
-                    content: { type: Type.STRING, description: '실제 구어체 발화 대사' },
+                    content: {
+                      type: Type.STRING,
+                      description: '실제 구어체 발화 대사. 절대 짧은 1~2마디 단답형 금지. 구체적 법조문, 계산 수치, 대법원 판례, 논리적 설득 또는 대표이사의 날카로운 반론을 담아 반드시 3~6개 이상의 완전하고 품격 있는 문장으로 길게 작성할 것.',
+                    },
                     legalKeywords: {
                       type: Type.ARRAY,
                       items: { type: Type.STRING },
@@ -676,8 +691,15 @@ app.post('/api/scenario/export-mp3', async (req, res) => {
       Math.floor(combinedPcm.byteLength / 2)
     );
 
+    // Dynamically load lamejs Mp3Encoder safely across ESM & CJS runtimes
+    const lameModule = await (new Function('return import("@breezystack/lamejs")')());
+    const Mp3EncoderClass = lameModule.Mp3Encoder || lameModule.default?.Mp3Encoder;
+    if (!Mp3EncoderClass) {
+      throw new Error('MP3 인코더 모듈을 로드하지 못했습니다.');
+    }
+
     // Encode to broadcast standard MP3 (1 channel, 24000Hz, 128 kbps)
-    const encoder = new Mp3Encoder(1, 24000, 128);
+    const encoder = new Mp3EncoderClass(1, 24000, 128);
     const mp3Chunk1 = encoder.encodeBuffer(int16Samples);
     const mp3Chunk2 = encoder.flush();
     const finalMp3 = Buffer.concat([Buffer.from(mp3Chunk1), Buffer.from(mp3Chunk2)]);
@@ -716,21 +738,7 @@ app.post('/api/roleplay/feedback', async (req, res) => {
 
     const ai = getGeminiClient();
     if (!ai) {
-      console.warn('[roleplay/feedback] GEMINI_API_KEY not found, returning coaching feedback fallback');
-      return res.json({
-        score: 88,
-        grade: 'A',
-        strengths: [
-          '고객의 질문 의도를 경청하고 공감하며 전문적인 어조로 상담을 주도한 점이 훌륭합니다.',
-          '세무 및 상법상의 주요 쟁점과 절차적 안전성을 분명하게 전달하려 노력했습니다.'
-        ],
-        weaknesses: [
-          '상법 제341조 및 대법원 판례 등 구체적인 법조문 번호와 수치를 제시하면 대표의 신뢰를 100% 확보할 수 있습니다.',
-          '단순 설명에 그치지 않고 대전글로리사업단 전담 세무사와의 2차 정밀 미팅 일정을 적극적으로 유도해 보세요.'
-        ],
-        recommendedAnswer: '대표님께서 염려하시는 세무조사나 부당행위계산부인 문제는 상법상 적법한 주주총회 결의와 객관적인 시가 감정평가 요건을 갖추면 법적으로 완벽히 보호받습니다. 대법원 판례에서도 정당한 사업 목적의 이익소각을 인정하고 있습니다. 저희 대전글로리사업단 전담 세무사가 작성한 사전 시뮬레이션 보고서로 그 안전성을 숫자로 증명해 드리겠습니다.',
-        coachingTip: '대표의 거절이나 의문은 관심의 다른 표현입니다. 즉시 반박하기보다는 "대표님께서 우려하시는 부분이 가장 핵심적이고 예리한 지점이십니다"라고 먼저 칭찬한 후 판례와 2차 미팅으로 연결하세요.'
-      });
+      return res.status(503).json({ error: 'GEMINI_API_KEY가 설정되지 않았습니다.' });
     }
 
     const prompt = `
@@ -812,10 +820,6 @@ async function startServer() {
   });
 }
 
-if (!process.env.VERCEL) {
-  startServer().catch((err) => {
-    console.error('[Server Start Error]:', err);
-  });
-}
-
-export default app;
+startServer().catch((err) => {
+  console.error('[Server Start Error]:', err);
+});

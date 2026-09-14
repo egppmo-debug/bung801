@@ -18,8 +18,7 @@ import {
   ChevronRight,
   ShieldAlert,
   Layers,
-  Database,
-  ExternalLink
+  Database
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { CorporateReport, ConsultingCategory, DEFAULT_CONSULTANT_NAME } from '../types';
@@ -53,7 +52,6 @@ export const LoadReportModal: React.FC<LoadReportModalProps> = ({
   const [googleUser, setGoogleUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [unauthorizedDomain, setUnauthorizedDomain] = useState<string | null>(null);
 
   // Google Drive files states
   const [driveFiles, setDriveFiles] = useState<DriveFileItem[]>([]);
@@ -119,7 +117,6 @@ export const LoadReportModal: React.FC<LoadReportModalProps> = ({
   const handleGoogleLogin = async () => {
     setIsLoggingIn(true);
     setErrorMessage(null);
-    setUnauthorizedDomain(null);
     try {
       const result = await googleSignIn();
       if (result) {
@@ -132,13 +129,7 @@ export const LoadReportModal: React.FC<LoadReportModalProps> = ({
         return;
       }
       console.warn('Google login note:', err?.message || err);
-      if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('unauthorized-domain')) {
-        const host = window.location.hostname || 'localhost';
-        setUnauthorizedDomain(host);
-        setErrorMessage(`접속 도메인(${host})이 Firebase 승인 목록에 없습니다. 아래 해결 가이드를 확인해 주세요.`);
-      } else {
-        setErrorMessage(err.message || 'Google 로그인에 실패했습니다. 팝업 차단 여부를 확인해 주세요.');
-      }
+      setErrorMessage(err.message || 'Google 로그인에 실패했습니다. 팝업 차단 여부를 확인해 주세요.');
     } finally {
       setIsLoggingIn(false);
     }
@@ -177,17 +168,8 @@ export const LoadReportModal: React.FC<LoadReportModalProps> = ({
       });
 
       if (!res.ok) {
-        const responseText = await res.text();
-        let errorMessage = '';
-        try {
-          errorMessage = JSON.parse(responseText).error || '';
-        } catch {
-          errorMessage = responseText;
-        }
-        if (res.status === 413) {
-          throw new Error('리포트 파일이 너무 큽니다. 50MB 이하의 PDF 또는 문서 파일을 사용해 주세요.');
-        }
-        throw new Error(errorMessage || '크레탑 리포트 분석에 실패했습니다.');
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || '크레탑 리포트 분석에 실패했습니다.');
       }
 
       const data = await res.json();
@@ -606,57 +588,53 @@ export const LoadReportModal: React.FC<LoadReportModalProps> = ({
               <button
                 id="tab-load-drive"
                 onClick={() => setActiveTab('drive')}
-                className={`pb-2 px-2.5 sm:pb-2.5 sm:px-3 font-semibold border-b-2 transition flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs ${
+                className={`pb-2 px-2.5 sm:pb-2.5 sm:px-3 font-semibold border-b-2 transition flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs cursor-pointer ${
                   activeTab === 'drive'
-                    ? 'border-orange-500 text-orange-300'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                    ? 'border-orange-500 text-orange-600 dark:text-orange-300'
+                    : 'border-transparent text-slate-700 dark:text-slate-400 hover:text-slate-950 dark:hover:text-slate-200'
                 }`}
               >
-                <FolderOpen className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                <span className="sm:hidden">드라이브</span>
-                <span className="hidden sm:inline">구글 드라이브</span>
+                <FolderOpen className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                <span>드라이브</span>
               </button>
 
               <button
                 id="tab-load-file"
                 onClick={() => setActiveTab('file')}
-                className={`pb-2 px-2.5 sm:pb-2.5 sm:px-3 font-semibold border-b-2 transition flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs ${
+                className={`pb-2 px-2.5 sm:pb-2.5 sm:px-3 font-semibold border-b-2 transition flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs cursor-pointer ${
                   activeTab === 'file'
-                    ? 'border-orange-500 text-orange-300'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                    ? 'border-orange-500 text-orange-600 dark:text-orange-300'
+                    : 'border-transparent text-slate-700 dark:text-slate-400 hover:text-slate-950 dark:hover:text-slate-200'
                 }`}
               >
-                <Upload className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-                <span className="sm:hidden">내 파일</span>
-                <span className="hidden sm:inline">내 파일 (PDF / 문서)</span>
+                <Upload className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 shrink-0" />
+                <span>내 파일</span>
               </button>
 
               <button
                 id="tab-load-sample"
                 onClick={() => setActiveTab('sample')}
-                className={`pb-2 px-2.5 sm:pb-2.5 sm:px-3 font-semibold border-b-2 transition flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs ${
+                className={`pb-2 px-2.5 sm:pb-2.5 sm:px-3 font-semibold border-b-2 transition flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs cursor-pointer ${
                   activeTab === 'sample'
-                    ? 'border-orange-500 text-orange-300'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                    ? 'border-orange-500 text-orange-600 dark:text-orange-300'
+                    : 'border-transparent text-slate-700 dark:text-slate-400 hover:text-slate-950 dark:hover:text-slate-200'
                 }`}
               >
-                <Building2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="sm:hidden">샘플(3종)</span>
-                <span className="hidden sm:inline">크레탑 실전 샘플 (3종)</span>
+                <Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span>샘플</span>
               </button>
 
               <button
                 id="tab-load-history"
                 onClick={() => setActiveTab('history')}
-                className={`pb-2 px-2.5 sm:pb-2.5 sm:px-3 font-semibold border-b-2 transition flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs ${
+                className={`pb-2 px-2.5 sm:pb-2.5 sm:px-3 font-semibold border-b-2 transition flex items-center gap-1 sm:gap-1.5 whitespace-nowrap text-xs cursor-pointer ${
                   activeTab === 'history'
-                    ? 'border-orange-500 text-orange-300'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                    ? 'border-orange-500 text-orange-600 dark:text-orange-300'
+                    : 'border-transparent text-slate-700 dark:text-slate-400 hover:text-slate-950 dark:hover:text-slate-200'
                 }`}
               >
-                <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span className="sm:hidden">최근({savedHistory.length})</span>
-                <span className="hidden sm:inline">최근 작업 리포트 ({savedHistory.length})</span>
+                <Clock className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400 shrink-0" />
+                <span>최근({savedHistory.length})</span>
               </button>
             </div>
 
@@ -685,7 +663,7 @@ export const LoadReportModal: React.FC<LoadReportModalProps> = ({
                           id="btn-google-signin"
                           onClick={handleGoogleLogin}
                           disabled={isLoggingIn}
-                          className="inline-flex items-center gap-3 px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-semibold text-xs shadow-md transition disabled:opacity-50 cursor-pointer"
+                          className="inline-flex items-center gap-3 px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-semibold text-xs shadow-md transition disabled:opacity-50"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
                             <path
@@ -708,75 +686,6 @@ export const LoadReportModal: React.FC<LoadReportModalProps> = ({
                           <span>{isLoggingIn ? '구글 계정 연결 중...' : 'Google 계정으로 로그인'}</span>
                         </button>
                       </div>
-
-                      {/* Unauthorized Domain Error Guidance Card */}
-                      {unauthorizedDomain && (
-                        <div className="text-left bg-amber-950/50 border border-amber-500/40 rounded-xl p-4 space-y-3 text-xs text-amber-200 mt-2">
-                          <div className="flex items-center gap-2 font-bold text-amber-300">
-                            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-                            <span>Firebase 인증 승인 도메인 등록 필요</span>
-                          </div>
-                          
-                          <p className="text-slate-300 text-[11px] leading-relaxed">
-                            현재 접속 중인 도메인 <code className="text-amber-300 font-mono bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700 font-bold">{unauthorizedDomain}</code>이 Firebase Authentication의 <strong>승인된 도메인(Authorized Domains)</strong>에 등록되어 있지 않아 로그인이 차단되었습니다.
-                          </p>
-
-                          <div className="bg-slate-900/90 border border-slate-800 rounded-lg p-3 space-y-2 text-[11px]">
-                            <div className="font-semibold text-slate-200">🛠️ 해결 방법 (2가지):</div>
-                            
-                            {unauthorizedDomain === '127.0.0.1' && (
-                              <div className="p-2 bg-slate-950 rounded border border-amber-500/30 flex items-center justify-between gap-2">
-                                <div>
-                                  <div className="font-bold text-amber-300">방법 1: localhost로 접속 (가장 빠름)</div>
-                                  <div className="text-slate-400 text-[10px]">127.0.0.1 대신 localhost로 접속하면 즉시 승인됩니다.</div>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    window.location.hostname = 'localhost';
-                                  }}
-                                  className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded text-[10px] transition shrink-0 cursor-pointer"
-                                >
-                                  localhost로 이동
-                                </button>
-                              </div>
-                            )}
-
-                            <div className="space-y-1 text-slate-300">
-                              <div className="font-bold text-slate-200">방법 2: Firebase 콘솔에 도메인 추가</div>
-                              <ol className="list-decimal list-inside space-y-0.5 text-slate-400 text-[10px] pl-1">
-                                <li>
-                                  <a 
-                                    href="https://console.firebase.google.com/project/gen-lang-client-0243488691/authentication/settings" 
-                                    target="_blank" 
-                                    rel="noreferrer"
-                                    className="text-amber-400 underline font-semibold inline-flex items-center gap-0.5"
-                                  >
-                                    Firebase 콘솔 인증 설정 열기 <ExternalLink className="w-2.5 h-2.5" />
-                                  </a>
-                                </li>
-                                <li><strong>Authentication</strong> → <strong>Settings(설정)</strong> → <strong>승인된 도메인(Authorized domains)</strong> 이동</li>
-                                <li><strong>[도메인 추가]</strong> 버튼 클릭 후 <code className="text-amber-300 font-mono bg-slate-800 px-1 rounded">{unauthorizedDomain}</code> 입력 및 저장</li>
-                              </ol>
-                            </div>
-                          </div>
-
-                          <div className="pt-1 flex items-center justify-between gap-2 border-t border-amber-500/20">
-                            <span className="text-[10px] text-slate-400">구글 로그인 없이 바로 파일 사용하기:</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveTab('file');
-                                setErrorMessage(null);
-                              }}
-                              className="px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-lg text-xs transition flex items-center gap-1.5 cursor-pointer shadow-sm"
-                            >
-                              <Upload className="w-3.5 h-3.5" />
-                              <span>내 파일 (PDF) 탭으로 이동</span>
-                            </button>
-                          </div>
-                        </div>
-                      )}
 
                       <div className="text-[11px] text-slate-500">
                         * 읽기 전용(ReadOnly) 권한으로 접근하며, 파일이 임의로 수정 또는 삭제되지 않습니다.

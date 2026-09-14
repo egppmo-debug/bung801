@@ -108,7 +108,7 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
             id="btn-prev-turn"
             onClick={onPrevTurn}
             disabled={currentTurnIndex <= 0}
-            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="p-2 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 border border-slate-300 dark:border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
             title="이전 턴"
           >
             <SkipBack className="w-4 h-4" />
@@ -118,30 +118,29 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
             <button
               id="btn-play-all"
               onClick={onPlayAll}
-              className="px-3 sm:px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 sm:gap-2 shadow-lg shadow-orange-950/50 transition"
+              className="px-3 sm:px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-black font-black text-xs flex items-center gap-1.5 sm:gap-2 shadow-lg transition cursor-pointer"
               title="전체 15턴 자동 음성 청취"
             >
-              <Play className="w-3.5 sm:w-4 h-3.5 sm:h-4 fill-slate-950 shrink-0" />
-              <span className="sm:hidden">전체 청취</span>
-              <span className="hidden sm:inline">전체 음성 청취 (TTS)</span>
+              <Play className="w-3.5 sm:w-4 h-3.5 sm:h-4 fill-black shrink-0" />
+              <span>재생</span>
             </button>
           ) : isPaused ? (
             <button
               id="btn-resume-audio"
               onClick={onResume}
-              className="px-3 sm:px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 sm:gap-2 transition"
+              className="px-3 sm:px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs flex items-center gap-1.5 sm:gap-2 transition cursor-pointer"
             >
-              <Play className="w-3.5 sm:w-4 h-3.5 sm:h-4 fill-slate-950 shrink-0" />
-              <span>이어서 듣기</span>
+              <Play className="w-3.5 sm:w-4 h-3.5 sm:h-4 fill-black shrink-0" />
+              <span>재생</span>
             </button>
           ) : (
             <button
               id="btn-pause-audio"
               onClick={onPause}
-              className="px-3 sm:px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 sm:gap-2 transition"
+              className="px-3 sm:px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs flex items-center gap-1.5 sm:gap-2 transition cursor-pointer"
             >
               <Pause className="w-3.5 sm:w-4 h-3.5 sm:h-4 shrink-0" />
-              <span>일시 정지</span>
+              <span>일시정지</span>
             </button>
           )}
 
@@ -149,7 +148,7 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
             id="btn-stop-audio"
             onClick={onStop}
             disabled={!isPlaying && !isPaused}
-            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="p-2 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 border border-slate-300 dark:border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
             title="정지"
           >
             <Square className="w-4 h-4" />
@@ -159,7 +158,7 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
             id="btn-next-turn"
             onClick={onNextTurn}
             disabled={currentTurnIndex >= totalTurns - 1}
-            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="p-2 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 border border-slate-300 dark:border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
             title="다음 턴"
           >
             <SkipForward className="w-4 h-4" />
@@ -172,12 +171,11 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
             <button
               id="btn-player-mp3-download"
               onClick={onOpenMp3Modal}
-              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 text-xs font-bold flex items-center gap-1 sm:gap-1.5 transition shadow-sm shadow-emerald-950 shrink-0"
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 dark:hover:bg-emerald-900 text-emerald-950 dark:text-emerald-200 border border-emerald-400 dark:border-emerald-500/40 text-xs font-bold flex items-center gap-1 sm:gap-1.5 transition shadow-sm shrink-0 cursor-pointer"
               title="전체 대본 MP3 파일 다운로드"
             >
-              <Headphones className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span className="sm:hidden">MP3</span>
-              <span className="hidden sm:inline">MP3 다운로드</span>
+              <Headphones className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 shrink-0" />
+              <span>MP3</span>
             </button>
           )}
 
@@ -190,10 +188,10 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
                 key={speed}
                 id={`btn-speed-${speed}`}
                 onClick={() => onChangeSpeed(speed)}
-                className={`px-2 py-1 rounded text-[11px] font-semibold transition ${
+                className={`px-2 py-1 rounded text-[11px] font-bold transition cursor-pointer ${
                   playbackSpeed === speed
-                    ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40'
-                    : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 border border-slate-700'
+                    ? 'bg-orange-500 text-black font-black shadow-sm'
+                    : 'bg-white dark:bg-slate-800/80 text-slate-900 dark:text-slate-200 hover:bg-slate-100 dark:hover:text-white border border-slate-300 dark:border-slate-700'
                 }`}
               >
                 {speed}x

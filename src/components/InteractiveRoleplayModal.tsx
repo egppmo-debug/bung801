@@ -49,7 +49,7 @@ export const InteractiveRoleplayModal: React.FC<InteractiveRoleplayModalProps> =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!consultantAnswer.trim()) return;
+    if (!consultantAnswer?.trim()) return;
 
     setIsLoading(true);
     setErrorMessage(null);
@@ -169,20 +169,18 @@ export const InteractiveRoleplayModal: React.FC<InteractiveRoleplayModalProps> =
               <button
                 type="submit"
                 id="btn-submit-feedback"
-                disabled={isLoading || !consultantAnswer.trim()}
-                className="px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 sm:gap-2 shadow-lg shadow-orange-950/40 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                disabled={isLoading || !consultantAnswer?.trim()}
+                className="px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 sm:gap-2 shadow-lg shadow-orange-950/40 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
               >
                 {isLoading ? (
                   <>
                     <Sparkles className="w-4 h-4 animate-spin text-slate-950 shrink-0" />
-                    <span className="sm:hidden">채점 중...</span>
-                    <span className="hidden sm:inline">AI 마스터 트레이너 채점 중...</span>
+                    <span>분석 중...</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-3.5 h-3.5 text-slate-950 shrink-0" />
-                    <span className="sm:hidden">점수 분석</span>
-                    <span className="hidden sm:inline">AI 코칭 및 점수 분석 요청</span>
+                    <span>점수 분석</span>
                   </>
                 )}
               </button>

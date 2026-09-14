@@ -79,7 +79,7 @@ export const ReportInputPanel: React.FC<ReportInputPanelProps> = ({
     }
   };
 
-  const isFormValid = !!report.companyName.trim();
+  const isFormValid = Boolean(report?.companyName?.trim());
 
   return (
     <div className="bg-slate-900/95 border border-slate-800 rounded-2xl p-5 shadow-2xl mb-8">
@@ -108,43 +108,40 @@ export const ReportInputPanel: React.FC<ReportInputPanelProps> = ({
           <button
             id="btn-panel-load-report"
             onClick={onOpenLoadReport}
-            className="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg bg-orange-500 hover:bg-orange-400 text-slate-950 transition flex items-center gap-1 sm:gap-1.5 shadow-md shadow-orange-950/40"
+            className="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg bg-orange-500 hover:bg-orange-400 text-black transition flex items-center gap-1 sm:gap-1.5 shadow-md cursor-pointer"
             title="리포트 파일(.pdf/.docx/.txt) 불러오기"
           >
             <FolderOpen className="w-3.5 h-3.5 shrink-0" />
-            <span className="sm:hidden">파일 불러오기</span>
-            <span className="hidden sm:inline">리포트 파일 불러오기</span>
+            <span>파일 열기</span>
           </button>
 
-          {/* Clear Form */}
+          {/* Clear Form & Scenario */}
           <button
             id="btn-clear-report"
             onClick={onClearReport}
-            className="px-2 sm:px-2.5 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-300 border border-slate-700 transition flex items-center gap-1"
-            title="입력 내용 비우기"
+            className="px-2 sm:px-2.5 py-1.5 text-xs font-bold rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 hover:text-rose-600 dark:hover:text-rose-300 border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 cursor-pointer"
+            title="입력 폼 및 아래 상담 시나리오 전체 초기화"
           >
             <Trash2 className="w-3.5 h-3.5 shrink-0" />
-            <span>비우기</span>
+            <span>초기화</span>
           </button>
 
           {/* Generate Scenario AI */}
           <button
             id="btn-generate-ai"
-            onClick={onGenerateAI}
+            onClick={() => onGenerateAI()}
             disabled={isGenerating || !isFormValid}
-            className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 transition flex items-center gap-1.5 sm:gap-2 shadow-lg shadow-orange-950/40 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-black rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-black transition flex items-center gap-1.5 sm:gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isGenerating ? (
               <>
-                <Sparkles className="w-4 h-4 animate-spin text-slate-950 shrink-0" />
-                <span className="sm:hidden">작성 중...</span>
-                <span className="hidden sm:inline">Gemini 15턴 작성 중...</span>
+                <Sparkles className="w-4 h-4 animate-spin text-black shrink-0" />
+                <span>생성 중...</span>
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4 text-slate-950 shrink-0" />
-                <span className="sm:hidden">[{currentCat.code}] AI 생성</span>
-                <span className="hidden sm:inline">[{currentCat.code}] 4단계 실전 시나리오 AI 생성</span>
+                <Sparkles className="w-4 h-4 text-black shrink-0" />
+                <span>AI 생성</span>
               </>
             )}
           </button>
@@ -164,7 +161,7 @@ export const ReportInputPanel: React.FC<ReportInputPanelProps> = ({
         </div>
 
         {/* AI Recommendation alert inside panel if company report has data */}
-        {report.companyName.trim() && (
+        {Boolean(report?.companyName?.trim()) && (
           <div className="p-3 rounded-xl bg-orange-950/40 border border-orange-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <div className="flex items-start sm:items-center gap-2">
               <Award className="w-4 h-4 text-orange-400 shrink-0 mt-0.5 sm:mt-0" />
@@ -185,9 +182,9 @@ export const ReportInputPanel: React.FC<ReportInputPanelProps> = ({
               <button
                 type="button"
                 onClick={() => handleCategoryChange(recommendedCat)}
-                className="shrink-0 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-orange-500 hover:bg-orange-400 text-slate-950 transition flex items-center gap-1 self-start sm:self-auto cursor-pointer"
+                className="shrink-0 px-2.5 py-1 text-[11px] font-black rounded-lg bg-orange-500 hover:bg-orange-400 text-black transition flex items-center gap-1 self-start sm:self-auto cursor-pointer"
               >
-                <Sparkles className="w-3 h-3" />
+                <Sparkles className="w-3 h-3 text-black" />
                 <span>추천 적용</span>
               </button>
             )}
@@ -206,28 +203,28 @@ export const ReportInputPanel: React.FC<ReportInputPanelProps> = ({
                 onClick={() => handleCategoryChange(catKey)}
                 className={`p-2 rounded-xl border text-left transition flex items-center justify-between text-xs cursor-pointer ${
                   isSelected
-                    ? 'bg-orange-500/20 border-orange-500 text-orange-200 ring-1 ring-orange-500/50 shadow-sm'
+                    ? 'bg-orange-500 text-black font-extrabold border-orange-500 shadow-sm'
                     : isRec
-                    ? 'bg-slate-900 border-amber-500/50 hover:border-amber-400 text-slate-300'
-                    : 'bg-slate-950/60 hover:bg-slate-800/80 border-slate-800 text-slate-400 hover:text-slate-200'
+                    ? 'bg-amber-100 dark:bg-slate-900 border-amber-500/60 hover:border-amber-400 text-amber-950 dark:text-slate-100 font-bold'
+                    : 'bg-white dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-slate-200 font-bold'
                 }`}
               >
                 <div className="min-w-0 pr-1">
                   <div className="flex items-center gap-1">
-                    <span className={`font-bold text-[10px] ${isSelected ? 'text-orange-400' : 'text-slate-500'}`}>
+                    <span className={`font-bold text-[10px] ${isSelected ? 'text-black' : 'text-slate-600 dark:text-slate-400'}`}>
                       {cat.code}
                     </span>
                     {isRec && (
-                      <span className="text-[9px] text-amber-300 bg-amber-950/80 border border-amber-500/40 px-1 py-0.2 rounded">
+                      <span className="text-[9px] text-amber-950 dark:text-amber-300 bg-amber-200 dark:bg-amber-950/80 border border-amber-400 dark:border-amber-500/40 px-1 py-0.2 rounded font-bold">
                         추천
                       </span>
                     )}
                   </div>
-                  <div className="font-semibold text-xs truncate mt-0.5">
+                  <div className={`font-bold text-xs truncate mt-0.5 ${isSelected ? 'text-black' : 'text-slate-900 dark:text-slate-200'}`}>
                     {cat.name}
                   </div>
                 </div>
-                {isSelected && <Check className="w-3.5 h-3.5 text-orange-400 shrink-0" />}
+                {isSelected && <Check className="w-3.5 h-3.5 text-black shrink-0" />}
               </button>
             );
           })}

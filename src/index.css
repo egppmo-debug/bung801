@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* 
  * =========================================================================
@@ -9,52 +10,59 @@
 :root {
   color-scheme: light;
 
-  /* Slate Color Scale for Light Mode (Default) */
+  /* Slate Color Scale for Light Mode (Default) - Enhanced High Contrast for crisp readability */
   --color-slate-50: #020617;    /* 최고 대비 텍스트 (Deepest text) */
-  --color-slate-100: #0f172a;   /* 메인 타이틀, 헤딩 텍스트 (Slate-900 equivalent) */
-  --color-slate-200: #1e293b;   /* 서브 타이틀, 강조 텍스트 (Slate-800 equivalent) */
-  --color-slate-300: #334155;   /* 본문 텍스트, 라벨 (Slate-700 equivalent) */
-  --color-slate-400: #475569;   /* 보조 설명, 아이콘, 힌트 (Slate-600 equivalent) */
-  --color-slate-500: #64748b;   /* 타임스탬프, 미세 메타데이터 */
-  --color-slate-600: #94a3b8;   /* 연한 테두리, 비활성 아이콘 */
+  --color-slate-100: #090d16;   /* 메인 타이틀, 헤딩 텍스트 (Ultra sharp) */
+  --color-slate-200: #0f172a;   /* 서브 타이틀, 강조 텍스트, 버튼 메인 텍스트 (High contrast) */
+  --color-slate-300: #1e293b;   /* 본문 텍스트, 라벨, 버튼 보조 텍스트 (High readability) */
+  --color-slate-400: #334155;   /* 보조 설명, 아이콘, 힌트 */
+  --color-slate-500: #475569;   /* 타임스탬프, 메타데이터 */
+  --color-slate-600: #64748b;   /* 서브 보조 텍스트 */
   --color-slate-700: #cbd5e1;   /* 구분선, 인풋 테두리 */
   --color-slate-800: #e2e8f0;   /* 카드 테두리, 칩/서브컨테이너 배경 */
   --color-slate-900: #ffffff;   /* 기본 카드 및 패널 배경 (White surface) */
   --color-slate-950: #f8fafc;   /* 전체 페이지 캔버스 배경 (Light gray canvas) */
 
-  /* Point Accent Colors tuned for Light Mode (High Contrast & WCAG AA) */
-  --color-orange-400: #ea580c;  /* Orange-600 for sharp text legibility */
-  --color-orange-300: #c2410c;  /* Orange-700 for badges */
-  --color-orange-950: #fff7ed;  /* Orange-50 for delicate soft badge background */
+  /* Point Accent Colors tuned for Light Mode (High Contrast & WCAG AA Legibility) */
+  --color-orange-400: #c2410c;  /* Orange-700 for sharp text and icon legibility */
+  --color-orange-300: #9a3412;  /* Orange-800 for high-contrast badges & labels */
+  --color-orange-200: #7c2d12;  /* Deepest orange */
+  --color-orange-950: #fff7ed;  /* Orange-50 for soft badge background */
   --color-orange-900: #ffedd5;  /* Orange-100 */
 
-  --color-amber-400: #d97706;   /* Amber-600 */
-  --color-amber-300: #b45309;   /* Amber-700 */
+  --color-amber-400: #b45309;   /* Amber-700 */
+  --color-amber-300: #92400e;   /* Amber-800 */
+  --color-amber-200: #78350f;
   --color-amber-950: #fffbeb;   /* Amber-50 */
   --color-amber-900: #fef3c7;   /* Amber-100 */
 
-  --color-blue-400: #2563eb;    /* Blue-600 */
-  --color-blue-300: #1d4ed8;    /* Blue-700 */
+  --color-blue-400: #1d4ed8;    /* Blue-700 */
+  --color-blue-300: #1e40af;    /* Blue-800 */
+  --color-blue-200: #172554;
   --color-blue-950: #eff6ff;    /* Blue-50 */
   --color-blue-900: #dbeafe;    /* Blue-100 */
 
-  --color-emerald-400: #059669; /* Emerald-600 */
-  --color-emerald-300: #047857; /* Emerald-700 */
+  --color-emerald-400: #047857; /* Emerald-700 */
+  --color-emerald-300: #065f46; /* Emerald-800 */
+  --color-emerald-200: #022c22;
   --color-emerald-950: #ecfdf5; /* Emerald-50 */
   --color-emerald-900: #d1fae5; /* Emerald-100 */
 
-  --color-rose-400: #e11d48;    /* Rose-600 */
-  --color-rose-300: #be123c;    /* Rose-700 */
+  --color-rose-400: #be123c;    /* Rose-700 */
+  --color-rose-300: #9f1239;    /* Rose-800 */
+  --color-rose-200: #4c0519;
   --color-rose-950: #fff1f2;    /* Rose-50 */
   --color-rose-900: #ffe4e6;    /* Rose-100 */
 
-  --color-red-400: #dc2626;     /* Red-600 */
-  --color-red-300: #b91c1c;     /* Red-700 */
+  --color-red-400: #b91c1c;     /* Red-700 */
+  --color-red-300: #991b1b;     /* Red-800 */
+  --color-red-200: #450a0a;
   --color-red-950: #fef2f2;     /* Red-50 */
   --color-red-900: #fee2e2;     /* Red-100 */
 
-  --color-indigo-400: #4f46e5;  /* Indigo-600 */
-  --color-indigo-300: #4338ca;  /* Indigo-700 */
+  --color-indigo-400: #4338ca;  /* Indigo-700 */
+  --color-indigo-300: #3730a3;  /* Indigo-800 */
+  --color-indigo-200: #1e1b4b;
   --color-indigo-950: #eef2ff;  /* Indigo-50 */
   --color-indigo-900: #e0e7ff;  /* Indigo-100 */
 }
@@ -122,7 +130,251 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Light mode card elevation refinement */
+/* Light mode card elevation refinement & button text contrast boost */
 :root:not(.dark) .bg-slate-900 {
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
 }
+
+/* Light mode specific text contrast fixes for inverted slate scale */
+:root:not(.dark) .text-slate-950,
+:root:not(.dark) .text-slate-900,
+:root:not(.dark) .text-slate-800 {
+  color: #090d16 !important; /* Force deep dark ink black on light mode */
+}
+:root:not(.dark) .text-slate-700,
+:root:not(.dark) .text-slate-600 {
+  color: #1e293b !important; /* Force high-contrast secondary text */
+}
+:root:not(.dark) .text-slate-400,
+:root:not(.dark) .text-slate-500 {
+  color: #334155 !important; /* Force readable slate text */
+}
+:root:not(.dark) .text-slate-300 {
+  color: #0f172a !important; /* Force high contrast dark slate for readability */
+}
+:root:not(.dark) .text-rose-200 {
+  color: #9f1239 !important;
+}
+:root:not(.dark) .text-emerald-200 {
+  color: #065f46 !important;
+}
+:root:not(.dark) .text-indigo-200 {
+  color: #3730a3 !important;
+}
+:root:not(.dark) .text-amber-300 {
+  color: #92400e !important;
+}
+:root:not(.dark) .text-orange-300 {
+  color: #9a3412 !important;
+}
+
+/* 
+ * =========================================================================
+ * Comprehensive Button Text & Visibility System (High Contrast & Clear Inks)
+ * =========================================================================
+ */
+
+/* 1. Global button base legibility */
+button, [role="button"] {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* 2. Orange / Amber / Gold Action Buttons (Clear solid deep black text without excessive bold) */
+button[class*="bg-orange-500"],
+button[class*="bg-amber-500"],
+button[class*="from-orange-500"],
+button[class*="from-amber-500"],
+button.bg-orange-500,
+button.bg-amber-500 {
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+button[class*="bg-orange-500"] span,
+button[class*="bg-amber-500"] span,
+button[class*="from-orange-500"] span,
+button[class*="from-amber-500"] span,
+button[class*="bg-orange-500"] svg,
+button[class*="bg-amber-500"] svg {
+  color: #000000 !important;
+  fill: currentColor;
+}
+
+/* 3. Light Mode: Light Neutral Buttons (Deep black text + visible outline) */
+:root:not(.dark) button[class*="bg-white"],
+:root:not(.dark) button[class*="bg-slate-50"],
+:root:not(.dark) button[class*="bg-slate-100"],
+:root:not(.dark) button[class*="bg-slate-200"] {
+  color: #090d16 !important;
+  border-color: #94a3b8 !important;
+}
+
+:root:not(.dark) button[class*="bg-white"] span,
+:root:not(.dark) button[class*="bg-slate-50"] span,
+:root:not(.dark) button[class*="bg-slate-100"] span,
+:root:not(.dark) button[class*="bg-slate-200"] span {
+  color: #090d16 !important;
+}
+
+:root:not(.dark) button[class*="bg-white"] svg:not([class*="text-"]),
+:root:not(.dark) button[class*="bg-slate-50"] svg:not([class*="text-"]),
+:root:not(.dark) button[class*="bg-slate-100"] svg:not([class*="text-"]),
+:root:not(.dark) button[class*="bg-slate-200"] svg:not([class*="text-"]) {
+  color: #0f172a !important;
+}
+
+/* 3-B. Dark Slate Buttons in Dark Mode maintain crisp white text */
+.dark button[class*="bg-slate-800"]:not([class*="text-black"]),
+.dark button[class*="bg-slate-900"]:not([class*="text-black"]),
+.dark button[class*="bg-slate-950"]:not([class*="text-black"]) {
+  color: #f8fafc !important;
+}
+.dark button[class*="bg-slate-800"] span:not([class*="text-"]):not([class*="bg-"]),
+.dark button[class*="bg-slate-900"] span:not([class*="text-"]):not([class*="bg-"]),
+.dark button[class*="bg-slate-950"] span:not([class*="text-"]):not([class*="bg-"]) {
+  color: #f8fafc !important;
+}
+
+/* 4. Light Mode: Tinted Badge Buttons (Crisp, saturated, high-contrast dark tones) */
+:root:not(.dark) button[class*="bg-rose-100"],
+:root:not(.dark) button[class*="bg-rose-950"] {
+  background-color: #ffe4e6 !important;
+  border-color: #f43f5e !important;
+  color: #881337 !important;
+}
+:root:not(.dark) button[class*="bg-rose-100"] span,
+:root:not(.dark) button[class*="bg-rose-950"] span {
+  color: #881337 !important;
+}
+
+:root:not(.dark) button[class*="bg-emerald-100"],
+:root:not(.dark) button[class*="bg-emerald-950"] {
+  background-color: #d1fae5 !important;
+  border-color: #10b981 !important;
+  color: #064e3b !important;
+}
+:root:not(.dark) button[class*="bg-emerald-100"] span,
+:root:not(.dark) button[class*="bg-emerald-950"] span {
+  color: #064e3b !important;
+}
+
+:root:not(.dark) button[class*="bg-indigo-100"],
+:root:not(.dark) button[class*="bg-indigo-950"] {
+  background-color: #e0e7ff !important;
+  border-color: #6366f1 !important;
+  color: #1e1b4b !important;
+}
+:root:not(.dark) button[class*="bg-indigo-100"] span,
+:root:not(.dark) button[class*="bg-indigo-950"] span {
+  color: #1e1b4b !important;
+}
+
+:root:not(.dark) button[class*="bg-amber-100"],
+:root:not(.dark) button[class*="bg-amber-950"],
+:root:not(.dark) button[class*="bg-amber-500/"] {
+  background-color: #fef3c7 !important;
+  border-color: #f59e0b !important;
+  color: #78350f !important;
+}
+:root:not(.dark) button[class*="bg-amber-100"] span,
+:root:not(.dark) button[class*="bg-amber-950"] span,
+:root:not(.dark) button[class*="bg-amber-500/"] span {
+  color: #78350f !important;
+}
+
+/* 5. Dark Mode: Boost Slate button text contrast to crisp, clean white */
+.dark button[class*="bg-slate-900"],
+.dark button[class*="bg-slate-800"],
+.dark button[class*="bg-slate-950"] {
+  border-color: #334155 !important;
+}
+
+.dark button[class*="bg-slate-900"]:not([class*="text-rose-"]):not([class*="text-emerald-"]):not([class*="text-indigo-"]):not([class*="text-amber-"]):not([class*="text-orange-"]),
+.dark button[class*="bg-slate-800"]:not([class*="text-rose-"]):not([class*="text-emerald-"]):not([class*="text-indigo-"]):not([class*="text-amber-"]):not([class*="text-orange-"]),
+.dark button[class*="bg-slate-950"]:not([class*="text-rose-"]):not([class*="text-emerald-"]):not([class*="text-indigo-"]):not([class*="text-amber-"]):not([class*="text-orange-"]) {
+  color: #f8fafc !important;
+}
+
+.dark button[class*="bg-slate-900"] span:not([class*="text-"]):not([class*="bg-"]),
+.dark button[class*="bg-slate-800"] span:not([class*="text-"]):not([class*="bg-"]),
+.dark button[class*="bg-slate-950"] span:not([class*="text-"]):not([class*="bg-"]) {
+  color: #f8fafc !important;
+}
+
+/* 
+ * =========================================================================
+ * 6. [사용자 커스텀 가능] 잠금 화면 키패드 및 잠금 해제 버튼 색상
+ *    사용자께서 index.css에서 이 클래스들의 색상을 자유롭게 변경하실 수 있습니다.
+ * =========================================================================
+ */
+
+/* [라이트 모드] 키패드 숫자 버튼: 부드러운 슬레이트 배경 + 선명한 딥블랙 텍스트 */
+:root:not(.dark) .lock-keypad-btn {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #090d16 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+:root:not(.dark) .lock-keypad-btn span {
+  color: #090d16 !important;
+}
+:root:not(.dark) .lock-keypad-btn:hover {
+  background-color: #e2e8f0 !important;
+}
+:root:not(.dark) .lock-keypad-btn:active {
+  background-color: #ffedd5 !important;
+  border-color: #f97316 !important;
+}
+
+/* [다크 모드] 키패드 숫자 버튼: 돋보이는 슬레이트 배경 + 뚜렷한 테두리 + 순백색(#ffffff) 텍스트 */
+.dark .lock-keypad-btn {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+}
+.dark .lock-keypad-btn span {
+  color: #ffffff !important;
+}
+.dark .lock-keypad-btn:hover {
+  background-color: #334155 !important;
+  border-color: #64748b !important;
+}
+.dark .lock-keypad-btn:active {
+  background-color: #7c2d12 !important;
+  border-color: #ea580c !important;
+}
+
+/* [기능 키] 취소(C) 및 지우기(Backspace) 버튼 */
+:root:not(.dark) .lock-keypad-action-btn {
+  background-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+  color: #090d16 !important;
+}
+:root:not(.dark) .lock-keypad-action-btn span,
+:root:not(.dark) .lock-keypad-action-btn svg {
+  color: #090d16 !important;
+}
+
+.dark .lock-keypad-action-btn {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
+}
+.dark .lock-keypad-action-btn span,
+.dark .lock-keypad-action-btn svg {
+  color: #f8fafc !important;
+}
+
+/* [메인 버튼] 솔루션 잠금 해제 버튼 */
+.lock-submit-btn {
+  background: linear-gradient(135deg, #f97316 0%, #f59e0b 100%) !important;
+  color: #000000 !important;
+}
+.lock-submit-btn span,
+.lock-submit-btn svg {
+  color: #000000 !important;
+}
+
+
